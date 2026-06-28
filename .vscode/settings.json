@@ -1,6 +1,6 @@
 {
-    "javascript.preferences.importModuleSpecifier": "relative",
-    "typescript.tsdk": "node_modules/typescript/lib",
+    "js/ts.preferences.importModuleSpecifier": "relative",
+    "js/ts.tsdk.path": "node_modules/typescript/lib",
   
     "search.exclude": {
       "**/*.user.js": true,

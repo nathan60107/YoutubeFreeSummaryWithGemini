@@ -10,7 +10,7 @@ export const mode = (modeRaw.match(/^#{{.+}}$/) ? "production" : modeRaw) as "pr
 /** The branch to use in various URLs that point to the GitHub repo */
 export const branch = (branchRaw.match(/^#{{.+}}$/) ? "main" : branchRaw) as "main" | "develop";
 /** Path to the GitHub repo in the format "User/Repo" */
-export const repo = "#REPLACE:User/Repo";
+export const repo = "nathan60107/YoutubeFreeSummaryWithGemini";
 /** Which host the userscript was installed from */
 export const host = (hostRaw.match(/^#{{.+}}$/) ? "github" : hostRaw) as "github" | "greasyfork" | "openuserjs";
 /** The build number of the userscript */
