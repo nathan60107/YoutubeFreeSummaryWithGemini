@@ -102,7 +102,7 @@ const ringBell = Boolean(env.RING_BELL && (env.RING_BELL.length > 0 && env.RING_
 // @license           ${pkg.license}
 // @author            ${pkg.author.name}
 // @copyright         ${pkg.author.name} (${pkg.author.url})
-// @icon              ${getResourceUrl("icon.png", buildNbr)}
+// @icon              ${getResourceUrl("icon.svg", buildNbr)}
 // @match             *://*.youtube.com/*
 // @match             *://aistudio.google.com/*
 // @run-at            document-start

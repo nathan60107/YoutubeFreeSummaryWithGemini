@@ -8,7 +8,7 @@
 // @license           MIT
 // @author            nathan60107
 // @copyright         nathan60107 (https://github.com/nathan60107)
-// @icon              https://raw.githubusercontent.com/nathan60107/YoutubeFreeSummaryWithGemini/main/assets/icon.png?b=33fd113
+// @icon              https://raw.githubusercontent.com/nathan60107/YoutubeFreeSummaryWithGemini/main/assets/icon.svg?b=49df324
 // @match             *://*.youtube.com/*
 // @match             *://aistudio.google.com/*
 // @run-at            document-start
@@ -24,7 +24,7 @@
 // @grant             GM.openInTab
 // @grant             unsafeWindow
 // @noframes
-// @resource          img-icon https://raw.githubusercontent.com/nathan60107/YoutubeFreeSummaryWithGemini/main/assets/icon.png?b=33fd113
+// @resource          img-icon https://raw.githubusercontent.com/nathan60107/YoutubeFreeSummaryWithGemini/main/assets/icon.svg?b=49df324
 // @require           https://cdn.jsdelivr.net/npm/@sv443-network/userutils@6.3.0/dist/index.global.js
 // ==/UserScript==
 
@@ -63,7 +63,7 @@
         return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
     };
 
-    const buildNumberRaw = "33fd113";
+    const buildNumberRaw = "49df324";
     /** The build number of the userscript */
     const buildNumber = (buildNumberRaw.match(/^#{{.+}}$/) ? "BUILD_ERROR!" : buildNumberRaw); // asserted as generic string instead of literal
     /** Default compression format used throughout the entire script */
