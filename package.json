@@ -1,7 +1,7 @@
 {
   "name": "youtube-free-summary-with-gemini",
   "userscriptName": "YoutubeFreeSummaryWithGemini",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Capture a YouTube video's on-page subtitles and send them straight to Google AI Studio (Gemini) for a free summary",
   "main": "index.js",
   "type": "module",

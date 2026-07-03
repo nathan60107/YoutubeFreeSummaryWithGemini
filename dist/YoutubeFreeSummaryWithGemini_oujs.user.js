@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name              YoutubeFreeSummaryWithGemini
 // @namespace         https://github.com/nathan60107/YoutubeFreeSummaryWithGemini
-// @version           0.2.0
+// @version           0.3.0
 // @description       Capture a YouTube video's on-page subtitles and send them straight to Google AI Studio (Gemini) for a free summary
 // @homepageURL       https://github.com/nathan60107/YoutubeFreeSummaryWithGemini#readme
 // @supportURL        https://github.com/nathan60107/YoutubeFreeSummaryWithGemini/issues
 // @license           MIT
 // @author            nathan60107
 // @copyright         nathan60107 (https://github.com/nathan60107)
-// @icon              https://raw.githubusercontent.com/nathan60107/YoutubeFreeSummaryWithGemini/main/assets/icon.svg?b=49df324
+// @icon              https://raw.githubusercontent.com/nathan60107/YoutubeFreeSummaryWithGemini/main/assets/icon.svg?b=7394448
 // @match             *://*.youtube.com/*
 // @match             *://aistudio.google.com/*
 // @run-at            document-start
@@ -24,7 +24,7 @@
 // @grant             GM.openInTab
 // @grant             unsafeWindow
 // @noframes
-// @resource          img-icon https://raw.githubusercontent.com/nathan60107/YoutubeFreeSummaryWithGemini/main/assets/icon.svg?b=49df324
+// @resource          img-icon https://raw.githubusercontent.com/nathan60107/YoutubeFreeSummaryWithGemini/main/assets/icon.svg?b=7394448
 // @require           https://cdn.jsdelivr.net/npm/@sv443-network/userutils@6.3.0/dist/index.global.js
 // ==/UserScript==
 
@@ -63,9 +63,23 @@
         return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
     };
 
-    const buildNumberRaw = "49df324";
+    const modeRaw = "production";
+    const hostRaw = "openuserjs";
+    const buildNumberRaw = "7394448";
+    /** The mode in which the script was built (production or development) */
+    const mode = (modeRaw.match(/^#{{.+}}$/) ? "production" : modeRaw);
+    /** Path to the GitHub repo in the format "User/Repo" */
+    const repo = "nathan60107/YoutubeFreeSummaryWithGemini";
+    /** Which host the userscript was installed from */
+    const host = (hostRaw.match(/^#{{.+}}$/) ? "github" : hostRaw);
     /** The build number of the userscript */
     const buildNumber = (buildNumberRaw.match(/^#{{.+}}$/) ? "BUILD_ERROR!" : buildNumberRaw); // asserted as generic string instead of literal
+    /** Names of platforms by value of {@linkcode host} */
+    const platformNames = {
+        github: "GitHub",
+        greasyfork: "GreasyFork",
+        openuserjs: "OpenUserJS",
+    };
     /** Default compression format used throughout the entire script */
     const compressionFormat = "deflate-raw";
     /** Whether sessionStorage is available and working */
@@ -143,12 +157,42 @@
     //#region logging
     /** Shared console prefix so every log is filterable and never lost behind a missing tag. */
     const logPrefix = "[YFSWG]";
-    /** Prefixed `console.log`. */
-    const log = (...args) => console.log(logPrefix, ...args);
-    /** Prefixed `console.warn`. */
-    const warn = (...args) => console.warn(logPrefix, ...args);
-    /** Prefixed `console.error`. */
-    const error = (...args) => console.error(logPrefix, ...args);
+    /**
+     * In-memory ring buffer of the most recent log lines from all three streams. Kept in RAM only
+     * (never persisted) so a debug report can include recent history without touching storage.
+     */
+    const logBuffer = [];
+    /** Cap on retained log lines; oldest are dropped past this to bound memory use. */
+    const maxLogEntries = 300;
+    /** Best-effort conversion of a single log argument to a readable string (expanding Errors/objects). */
+    function stringifyArg(arg) {
+        if (typeof arg === "string")
+            return arg;
+        if (arg instanceof Error)
+            return `${arg.name}: ${arg.message}${arg.stack ? `\n${arg.stack}` : ""}`;
+        try {
+            return JSON.stringify(arg);
+        }
+        catch (_a) {
+            return String(arg);
+        }
+    }
+    /** Appends a line to {@linkcode logBuffer}, trimming it back down to {@linkcode maxLogEntries}. */
+    function record$1(level, args) {
+        logBuffer.push({ t: Date.now(), level, msg: args.map(stringifyArg).join(" ") });
+        if (logBuffer.length > maxLogEntries)
+            logBuffer.splice(0, logBuffer.length - maxLogEntries);
+    }
+    /** Prefixed `console.log`, also captured into the in-memory log buffer. */
+    const log = (...args) => { record$1("log", args); console.log(logPrefix, ...args); };
+    /** Prefixed `console.warn`, also captured into the in-memory log buffer. */
+    const warn = (...args) => { record$1("warn", args); console.warn(logPrefix, ...args); };
+    /** Prefixed `console.error`, also captured into the in-memory log buffer. */
+    const error = (...args) => { record$1("error", args); console.error(logPrefix, ...args); };
+    /** Returns the captured log lines (oldest first), each formatted as `[ISO time] LEVEL message`. */
+    function getRecentLogs() {
+        return logBuffer.map(e => `[${new Date(e.t).toISOString()}] ${e.level.toUpperCase()} ${e.msg}`);
+    }
     /**
      * Opens the given URL in a new tab, using GM.openInTab if available
      * ⚠️ Requires the directive `@grant GM.openInTab`
@@ -210,6 +254,309 @@
         elem.id = `global-style-${ref !== null && ref !== void 0 ? ref : userutils.randomId(5, 36)}`;
         return elem;
     }
+
+    /**
+     * Shared modal scaffold used by the settings panel and the failure-feedback dialog.
+     * Handles the common overlay/backdrop, Escape-to-close, one-at-a-time dedupe, and base styling
+     * (overlay, box, title, primary/secondary buttons). Callers supply the inner HTML, wire up their
+     * own controls, and add any content-specific styles of their own.
+     */
+    /** Ref/id used for the shared base stylesheet, injected once. */
+    const styleRef$2 = "yfswg-modal";
+    /**
+     * Opens a modal using the shared scaffold and returns a {@linkcode ModalHandle}, or `null` if a
+     * modal with the same `id` is already open (so the caller can early-return). The dialog closes on
+     * Escape or a backdrop click; clicks inside the box are not propagated to the backdrop.
+     */
+    function openModal(opts) {
+        var _a;
+        if (document.getElementById(opts.id))
+            return null;
+        if (!document.getElementById(`global-style-${styleRef$2}`))
+            addStyle(modalStyle, styleRef$2);
+        const overlay = document.createElement("div");
+        overlay.id = opts.id;
+        overlay.className = "yfswg-modal-overlay";
+        overlay.innerHTML = `<div class="yfswg-modal-box" role="${(_a = opts.role) !== null && _a !== void 0 ? _a : "dialog"}" aria-modal="true" aria-label="${opts.label}">${opts.innerHtml}</div>`;
+        const modal = overlay.querySelector(".yfswg-modal-box");
+        const close = () => {
+            overlay.remove();
+            document.removeEventListener("keydown", onKeydown);
+        };
+        const onKeydown = (e) => {
+            if (e.key === "Escape")
+                close();
+        };
+        overlay.addEventListener("click", (e) => {
+            if (e.target === overlay)
+                close();
+        });
+        modal.addEventListener("click", (e) => e.stopPropagation());
+        document.addEventListener("keydown", onKeydown);
+        document.body.appendChild(overlay);
+        return { overlay, modal, close };
+    }
+    const modalStyle = `
+.yfswg-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  font-family: "Roboto", "Arial", sans-serif;
+}
+.yfswg-modal-box {
+  width: min(560px, 92vw);
+  max-height: 88vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 20px 24px 24px;
+  border-radius: 12px;
+  background: var(--yt-spec-base-background, #fff);
+  color: var(--yt-spec-text-primary, #0f0f0f);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+.yfswg-modal-title {
+  margin: 0 0 16px;
+  font-size: 1.8rem;
+  font-weight: 500;
+}
+.yfswg-modal-btn {
+  padding: 8px 16px;
+  font-size: 1.4rem;
+  font-weight: 500;
+  font-family: inherit;
+  border-radius: 18px;
+  border: none;
+  cursor: pointer;
+}
+.yfswg-modal-btn--primary {
+  background: var(--yt-spec-call-to-action, #065fd4);
+  color: #fff;
+}
+.yfswg-modal-btn--secondary {
+  background: var(--yt-spec-badge-chip-background, rgba(0, 0, 0, 0.08));
+  color: inherit;
+}
+.yfswg-modal-btn:hover {
+  filter: brightness(1.1);
+}
+`;
+
+    /**
+     * Shared failure feedback used by both the YouTube and AI Studio sides.
+     *
+     * On a failure we show a modal telling the user to refresh and retry. Failure timestamps are
+     * persisted (via GM storage, shared across tabs) so that if the user hits two failures within
+     * five minutes — even across a page refresh or across the YouTube/AI Studio tabs — the modal
+     * escalates to include a copyable debug report and a prompt to file a GitHub issue.
+     */
+    /** GM storage key holding the recent failure timestamps (JSON array of epoch ms). */
+    const failuresKey = "yfswg-recent-failures";
+    /** Sliding window within which repeated failures escalate the modal. */
+    const failureWindowMs = 5 * 60000;
+    /** Number of failures within the window that triggers the debug-report escalation. */
+    const escalateThreshold = 2;
+    /** GitHub issues page users are directed to when reporting a persistent problem. */
+    const issuesUrl = `https://github.com/${repo}/issues/new`;
+    const overlayId$1 = "yfswg-feedback-overlay";
+    const styleRef$1 = "yfswg-feedback";
+    /**
+     * Records the failure and shows the feedback modal, escalating to a debug report if this is the
+     * {@linkcode escalateThreshold}-th failure within {@linkcode failureWindowMs}.
+     */
+    function reportFailure(info) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const count = yield trackFailure();
+            showModal(info, count >= escalateThreshold);
+        });
+    }
+    /** Clears the persisted failure counter. Exposed for the dev-only "reset" menu command. */
+    function clearFailureCount() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield GM.deleteValue(failuresKey);
+        });
+    }
+    /** Appends `now` to the persisted failure list, prunes old entries, and returns the count in-window. */
+    function trackFailure() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const now = Date.now();
+            let times = [];
+            try {
+                times = JSON.parse(yield GM.getValue(failuresKey, "[]"));
+                if (!Array.isArray(times))
+                    times = [];
+            }
+            catch (_a) {
+                times = [];
+            }
+            times = times.filter(t => typeof t === "number" && now - t < failureWindowMs);
+            times.push(now);
+            yield GM.setValue(failuresKey, JSON.stringify(times));
+            return times.length;
+        });
+    }
+    /** Assembles a plain-text diagnostic report: environment, install source, and recent logs. */
+    function buildDebugReport(context) {
+        var _a, _b, _c, _d;
+        // scriptHandler/version aren't in the GM typings, so read them loosely.
+        const gm = GM.info;
+        const langs = Array.isArray(navigator.languages) ? navigator.languages.join(", ") : navigator.language;
+        const logs = getRecentLogs();
+        return [
+            "### YFSWG debug report",
+            `time: ${new Date().toISOString()}`,
+            `context: ${context}`,
+            "",
+            "**Script**",
+            `- name: ${scriptInfo.name}`,
+            `- version: ${scriptInfo.version}`,
+            `- build: ${buildNumber}`,
+            `- install source: ${(_a = platformNames[host]) !== null && _a !== void 0 ? _a : host}`,
+            `- namespace: ${scriptInfo.namespace}`,
+            "",
+            "**Environment**",
+            `- manager: ${(_b = gm.scriptHandler) !== null && _b !== void 0 ? _b : "unknown"} ${(_c = gm.version) !== null && _c !== void 0 ? _c : ""}`.trimEnd(),
+            `- url: ${location.href}`,
+            `- userAgent: ${navigator.userAgent}`,
+            `- platform: ${(_d = navigator.platform) !== null && _d !== void 0 ? _d : "unknown"}`,
+            `- language: ${navigator.language} (${langs})`,
+            `- viewport: ${window.innerWidth}x${window.innerHeight} @${window.devicePixelRatio}x`,
+            "",
+            "**Recent logs**",
+            logs.length > 0 ? logs.join("\n") : "(no logs captured)",
+        ].join("\n");
+    }
+    const defaultMessage = "摘要失敗了。請重新整理頁面後再試一次。";
+    /** Builds and shows the modal. Only one is shown at a time. */
+    function showModal(info, escalate) {
+        var _a;
+        const report = escalate ? buildDebugReport(info.context) : "";
+        const handle = openModal({
+            id: overlayId$1,
+            label: "摘要失敗",
+            role: "alertdialog",
+            innerHtml: `
+      <h2 class="yfswg-modal-title">摘要失敗</h2>
+      <p class="yfswg-fb-msg"></p>
+      ${escalate ? `
+        <div class="yfswg-fb-debug">
+          <p class="yfswg-fb-debug-lead">這個問題似乎連續發生了。若持續無法使用，請協助回報，讓問題更快被修好：</p>
+          <ol class="yfswg-fb-steps">
+            <li>點下方「複製診斷資訊」。</li>
+            <li>前往問題回報頁開一個新的 issue。</li>
+            <li>把剛剛複製的內容貼上，並簡述你的操作。</li>
+          </ol>
+          <textarea class="yfswg-fb-report" readonly rows="8"></textarea>
+          <div class="yfswg-fb-debug-actions">
+            <button type="button" class="yfswg-modal-btn yfswg-modal-btn--secondary" data-action="copy">複製診斷資訊</button>
+            <a class="yfswg-fb-issue" href="${issuesUrl}" target="_blank" rel="noopener noreferrer">前往問題回報頁 ↗</a>
+          </div>
+        </div>` : ""}
+      <div class="yfswg-fb-actions">
+        <button type="button" class="yfswg-modal-btn yfswg-modal-btn--primary" data-action="close">關閉</button>
+      </div>`,
+        });
+        if (!handle)
+            return; // one at a time
+        if (!document.getElementById(`global-style-${styleRef$1}`))
+            addStyle(feedbackStyle, styleRef$1);
+        const { overlay, close } = handle;
+        // Assign text via textContent to avoid injecting untrusted strings as HTML.
+        overlay.querySelector(".yfswg-fb-msg").textContent = (_a = info.userMessage) !== null && _a !== void 0 ? _a : defaultMessage;
+        overlay.querySelector("[data-action='close']").addEventListener("click", close);
+        if (escalate) {
+            const reportEl = overlay.querySelector(".yfswg-fb-report");
+            reportEl.value = report;
+            const copyBtn = overlay.querySelector("[data-action='copy']");
+            copyBtn.addEventListener("click", () => __awaiter(this, void 0, void 0, function* () {
+                const ok = yield copyText(report, reportEl);
+                copyBtn.textContent = ok ? "已複製 ✓" : "複製失敗，請手動選取";
+                setTimeout(() => (copyBtn.textContent = "複製診斷資訊"), 2500);
+            }));
+        }
+        overlay.querySelector("[data-action='close']").focus();
+    }
+    /** Copies text to the clipboard, falling back to selecting the textarea + `execCommand`. */
+    function copyText(text, textarea) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield navigator.clipboard.writeText(text);
+                return true;
+            }
+            catch (_a) {
+                try {
+                    textarea.focus();
+                    textarea.select();
+                    const ok = document.execCommand("copy");
+                    textarea.setSelectionRange(0, 0);
+                    textarea.blur();
+                    return ok;
+                }
+                catch (_b) {
+                    return false;
+                }
+            }
+        });
+    }
+    const feedbackStyle = `
+.yfswg-fb-msg {
+  margin: 0 0 8px;
+  font-size: 1.4rem;
+  line-height: 1.5;
+}
+.yfswg-fb-debug {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--yt-spec-10-percent-layer, rgba(0, 0, 0, 0.15));
+}
+.yfswg-fb-debug-lead {
+  margin: 0 0 8px;
+  font-size: 1.3rem;
+  line-height: 1.5;
+}
+.yfswg-fb-steps {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  font-size: 1.3rem;
+  line-height: 1.6;
+}
+.yfswg-fb-report {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  font-family: monospace;
+  font-size: 1.2rem;
+  line-height: 1.4;
+  padding: 8px 10px;
+  border: 1px solid var(--yt-spec-10-percent-layer, rgba(0, 0, 0, 0.2));
+  border-radius: 8px;
+  background: var(--yt-spec-badge-chip-background, rgba(0, 0, 0, 0.05));
+  color: inherit;
+  white-space: pre;
+}
+.yfswg-fb-debug-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+.yfswg-fb-issue {
+  font-size: 1.3rem;
+  color: var(--yt-spec-call-to-action, #065fd4);
+  text-decoration: none;
+}
+.yfswg-fb-issue:hover {
+  text-decoration: underline;
+}
+.yfswg-fb-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+`;
 
     /**
      * Intercepts the YouTube player's own `/api/timedtext` network requests so we can reuse the URL
@@ -276,12 +623,23 @@
         }
         log("timedtext interceptor installed");
     }
+    /** True when `url` belongs to `videoId` (or any video when `videoId` is omitted). */
+    function matchesVideo(url, videoId) {
+        return !videoId || url.includes(`v=${videoId}`);
+    }
+    /**
+     * Returns an already-captured timedtext URL for `videoId` (or the latest one) without waiting,
+     * or `null` if none has been observed yet. Lets callers skip re-triggering the player.
+     */
+    function peekTimedtextUrl(videoId) {
+        return latestUrl && matchesVideo(latestUrl, videoId) ? latestUrl : null;
+    }
     /**
      * Resolves with a timedtext URL for `videoId` (or the latest one if `videoId` is omitted),
      * waiting up to `timeoutMs` for the player to issue one. Resolves `null` on timeout.
      */
     function waitForTimedtextUrl(videoId, timeoutMs = 6000) {
-        const match = (url) => !videoId || url.includes(`v=${videoId}`);
+        const match = (url) => matchesVideo(url, videoId);
         if (latestUrl && match(latestUrl))
             return Promise.resolve(latestUrl);
         return new Promise((resolve) => {
@@ -362,6 +720,14 @@
   <path d="M18 12l.8 2.2L21 15l-2.2.8L18 18l-.8-2.2L15 15l2.2-.8L18 12z"/>
   <path d="M5.5 14l.6 1.7L8 16.3l-1.9.6L5.5 19l-.6-2.1L3 16.3l1.9-.6L5.5 14z"/>
 </svg>`.trim();
+    /**
+     * Spinning loading indicator: a ~270° arc drawn with `currentColor`. Rotation comes from the
+     * `yfswg-spin` CSS keyframes applied to its container while a summary is in progress.
+     */
+    const loadingIcon = `
+<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
+  <path d="M12 3a9 9 0 1 0 6.4 2.65"/>
+</svg>`.trim();
     /** Standard settings gear/cog. */
     const gearIcon = `
 <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true">
@@ -373,17 +739,14 @@
      * Reads/writes the persisted {@linkcode config} DataStore.
      */
     const overlayId = "yfswg-settings-overlay";
+    const styleRef = "yfswg-settings";
     /** Opens the settings modal, prefilled from the current config. */
     function openSettings() {
-        if (document.getElementById(overlayId))
-            return; // already open
-        addStyle(settingsStyle, "yfswg-settings");
         const data = config.getData();
-        const overlay = document.createElement("div");
-        overlay.id = overlayId;
-        overlay.className = "yfswg-overlay";
-        overlay.innerHTML = `
-    <div class="yfswg-modal" role="dialog" aria-modal="true" aria-label="YFSWG 設定">
+        const handle = openModal({
+            id: overlayId,
+            label: "YFSWG 設定",
+            innerHtml: `
       <h2 class="yfswg-modal-title">YouTube 摘要設定</h2>
 
       <label class="yfswg-field">
@@ -409,13 +772,17 @@
       </label>
 
       <div class="yfswg-actions">
-        <button type="button" class="yfswg-btn-secondary" data-action="reset">重設為預設</button>
+        <button type="button" class="yfswg-modal-btn yfswg-modal-btn--secondary" data-action="reset">重設為預設</button>
         <span class="yfswg-spacer"></span>
-        <button type="button" class="yfswg-btn-secondary" data-action="cancel">取消</button>
-        <button type="button" class="yfswg-btn-primary" data-action="save">儲存</button>
-      </div>
-    </div>`;
-        const modal = overlay.querySelector(".yfswg-modal");
+        <button type="button" class="yfswg-modal-btn yfswg-modal-btn--secondary" data-action="cancel">取消</button>
+        <button type="button" class="yfswg-modal-btn yfswg-modal-btn--primary" data-action="save">儲存</button>
+      </div>`,
+        });
+        if (!handle)
+            return; // already open
+        if (!document.getElementById(`global-style-${styleRef}`))
+            addStyle(settingsStyle, styleRef);
+        const { overlay, close } = handle;
         const promptEl = overlay.querySelector("[data-field='promptTemplate']");
         const langEl = overlay.querySelector("[data-field='preferredLangs']");
         const tsEl = overlay.querySelector("[data-field='includeTimestamps']");
@@ -425,21 +792,6 @@
         langEl.value = data.preferredLangs;
         tsEl.checked = data.includeTimestamps;
         autoEl.checked = data.autoSubmit;
-        const close = () => {
-            overlay.remove();
-            document.removeEventListener("keydown", onKeydown);
-        };
-        const onKeydown = (e) => {
-            if (e.key === "Escape")
-                close();
-        };
-        // Close when clicking the backdrop (but not inside the modal).
-        overlay.addEventListener("click", (e) => {
-            if (e.target === overlay)
-                close();
-        });
-        modal.addEventListener("click", (e) => e.stopPropagation());
-        document.addEventListener("keydown", onKeydown);
         overlay.querySelector("[data-action='cancel']").addEventListener("click", close);
         overlay.querySelector("[data-action='reset']").addEventListener("click", () => {
             promptEl.value = defaultPromptTemplate;
@@ -456,36 +808,9 @@
             });
             close();
         });
-        document.body.appendChild(overlay);
         promptEl.focus();
     }
     const settingsStyle = `
-.yfswg-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 100000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.6);
-}
-.yfswg-modal {
-  width: min(560px, 92vw);
-  max-height: 88vh;
-  overflow-y: auto;
-  box-sizing: border-box;
-  padding: 20px 24px 24px;
-  border-radius: 12px;
-  background: var(--yt-spec-base-background, #fff);
-  color: var(--yt-spec-text-primary, #0f0f0f);
-  font-family: "Roboto", "Arial", sans-serif;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-}
-.yfswg-modal-title {
-  margin: 0 0 16px;
-  font-size: 1.8rem;
-  font-weight: 500;
-}
 .yfswg-field {
   display: block;
   margin-bottom: 16px;
@@ -547,28 +872,6 @@
 }
 .yfswg-spacer {
   flex: 1;
-}
-.yfswg-btn-primary,
-.yfswg-btn-secondary {
-  padding: 8px 16px;
-  font-size: 1.4rem;
-  font-weight: 500;
-  font-family: inherit;
-  border-radius: 18px;
-  border: none;
-  cursor: pointer;
-}
-.yfswg-btn-primary {
-  background: var(--yt-spec-call-to-action, #065fd4);
-  color: #fff;
-}
-.yfswg-btn-secondary {
-  background: var(--yt-spec-badge-chip-background, rgba(0, 0, 0, 0.08));
-  color: inherit;
-}
-.yfswg-btn-primary:hover,
-.yfswg-btn-secondary:hover {
-  filter: brightness(1.1);
 }
 `;
 
@@ -673,7 +976,10 @@
      */
     function fetchViaInterceptedUrl(videoId) {
         return __awaiter(this, void 0, void 0, function* () {
-            enablePlayerCaptions();
+            // If the player already issued a timedtext request we can reuse, don't disturb the user's
+            // caption state; only toggle captions on when we have nothing captured yet.
+            if (!peekTimedtextUrl(videoId))
+                enablePlayerCaptions();
             const captured = yield waitForTimedtextUrl(videoId, 6000);
             if (!captured) {
                 warn("no player timedtext request captured (could not enable captions in time?)");
@@ -765,6 +1071,13 @@
         var _a;
         const langs = [navigator.language, ...((_a = navigator.languages) !== null && _a !== void 0 ? _a : [])].filter(Boolean);
         return [...new Set([...langs, "en"])];
+    }
+    /**
+     * Whether the currently playing video exposes any caption track. Used to grey out the summary
+     * button up front when there is nothing to summarize.
+     */
+    function hasCaptionsAvailable() {
+        return getCaptionTracks(getPlayerResponse()).length > 0;
     }
     /**
      * Captures subtitles for the currently playing video using page-based strategies.
@@ -886,19 +1199,59 @@
         onInteraction(mainBtn, () => void onSummaryClick(mainBtn));
         onInteraction(gearBtn, () => openSettings());
         likeDislike.before(split);
+        void watchCaptionAvailability(mainBtn);
+    }
+    /** Default (enabled) label / tooltip for the summary button. */
+    const mainBtnLabel = "用 Gemini 摘要";
+    /** Label / tooltip shown while the button is greyed out because the video has no captions. */
+    const noCaptionsLabel = "這部影片沒有可用的字幕，無法摘要";
+    /**
+     * Greys out the summary button until captions are detected for the current video. The player
+     * response can lag behind button insertion, so we poll: enable as soon as a track appears, and
+     * settle on the disabled state only if none shows up within the timeout.
+     */
+    function watchCaptionAvailability(mainBtn_1) {
+        return __awaiter(this, arguments, void 0, function* (mainBtn, timeoutMs = 10000, intervalMs = 400) {
+            setAvailable(mainBtn, false);
+            const start = Date.now();
+            while (mainBtn.isConnected && Date.now() - start < timeoutMs) {
+                if (hasCaptionsAvailable()) {
+                    setAvailable(mainBtn, true);
+                    return;
+                }
+                yield new Promise(r => setTimeout(r, intervalMs));
+            }
+        });
+    }
+    /**
+     * Toggles the summary button between its normal and greyed-out (no-captions) states. The native
+     * `disabled` attribute blocks the click without any JS guard, while the `title` tooltip still
+     * surfaces on hover so the user learns why it is greyed out. `aria-disabled` mirrors the state for
+     * assistive tech.
+     */
+    function setAvailable(mainBtn, available) {
+        mainBtn.classList.toggle("yfswg-disabled", !available);
+        mainBtn.disabled = !available;
+        mainBtn.setAttribute("aria-disabled", String(!available));
+        const label = available ? mainBtnLabel : noCaptionsLabel;
+        mainBtn.title = label;
+        mainBtn.setAttribute("aria-label", label);
     }
     /** Captures the current video's subtitles when the button is pressed. */
     function onSummaryClick(btn) {
         return __awaiter(this, void 0, void 0, function* () {
-            btn.classList.add("yfswg-busy");
-            btn.classList.remove("yfswg-done", "yfswg-error");
+            const iconEl = btn.querySelector(".ytSpecButtonShapeNextIcon");
+            setBusy(btn, iconEl, true);
             try {
                 const cfg = config.getData();
                 const preferredLangs = cfg.preferredLangs.split(",").map(s => s.trim()).filter(Boolean);
                 const result = yield getCurrentSubtitles(preferredLangs.length > 0 ? { preferredLangs } : {});
                 if (!result) {
                     warn("No captions are available for this video.");
-                    flash(btn, "yfswg-error");
+                    void reportFailure({
+                        context: "youtube:no-captions",
+                        userMessage: "找不到這部影片的字幕／翻譯，無法摘要。請確認影片有字幕，重新整理頁面後再試一次。",
+                    });
                     return;
                 }
                 log(`Captured ${result.segments.length} subtitle lines `
@@ -910,16 +1263,24 @@
                     createdAt: Date.now(),
                 });
                 openInTab(aiStudioUrl, false); // foreground the AI Studio tab
-                flash(btn, "yfswg-done");
+                // Success: restore silently (handled in finally), no extra indicator.
             }
             catch (err) {
                 error("Failed to capture subtitles:", err);
-                flash(btn, "yfswg-error");
+                void reportFailure({ context: "youtube:capture-error" });
             }
             finally {
-                btn.classList.remove("yfswg-busy");
+                setBusy(btn, iconEl, false);
             }
         });
+    }
+    /** Toggles the button's busy state: dims it and swaps the sparkle icon for the spinner (or back). */
+    function setBusy(btn, iconEl, busy) {
+        btn.classList.toggle("yfswg-busy", busy);
+        if (!iconEl)
+            return;
+        iconEl.classList.toggle("yfswg-spin", busy);
+        iconEl.innerHTML = busy ? loadingIcon : sparkleIcon;
     }
     /** Builds the final prompt by substituting the template tokens with the video's data. */
     function buildPrompt(result, template, includeTimestamps) {
@@ -937,11 +1298,6 @@
             return fromMeta;
         return document.title.replace(/\s*-\s*YouTube\s*$/, "").trim();
     }
-    /** Briefly applies a status class to the button for visual feedback. */
-    function flash(btn, cls, ms = 1500) {
-        btn.classList.add(cls);
-        setTimeout(() => btn.classList.remove(cls), ms);
-    }
     const buttonStyle = `
 .yfswg-split {
   display: inline-flex;
@@ -954,17 +1310,20 @@
   width: 100%;
   height: 100%;
   display: block;
-  fill: currentColor;
 }
 .yfswg-main.yfswg-busy {
   opacity: 0.6;
   pointer-events: none;
 }
-.yfswg-main.yfswg-done {
-  box-shadow: inset 0 0 0 2px #2ba640;
+.yfswg-main.yfswg-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
-.yfswg-main.yfswg-error {
-  box-shadow: inset 0 0 0 2px #cc0000;
+.yfswg-split .ytSpecButtonShapeNextIcon.yfswg-spin {
+  animation: yfswg-spin 0.8s linear infinite;
+}
+@keyframes yfswg-spin {
+  to { transform: rotate(360deg); }
 }
 `;
 
@@ -989,17 +1348,27 @@
             const payload = yield takeSummaryPayload();
             if (!payload)
                 return; // normal AI Studio visit, nothing to inject
-            const textarea = yield waitForPromptInput();
-            if (!textarea) {
-                warn("Could not find the AI Studio prompt input to inject into.");
-                return;
+            try {
+                const textarea = yield waitForPromptInput();
+                if (!textarea) {
+                    warn("Could not find the AI Studio prompt input to inject into.");
+                    void reportFailure({
+                        context: "aistudio:no-input",
+                        userMessage: "在 AI Studio 找不到輸入框，可能是頁面尚未載入完成或版面改版。請重新整理頁面後再試一次。",
+                    });
+                    return;
+                }
+                injectPrompt(textarea, payload.prompt);
+                log(`Injected subtitles into AI Studio prompt${payload.title ? ` for "${payload.title}"` : ""}.`);
+                if (payload.autoSubmit)
+                    yield submitPrompt(textarea);
+                else
+                    log("Auto-submit disabled; leaving the prompt for review.");
             }
-            injectPrompt(textarea, payload.prompt);
-            log(`Injected subtitles into AI Studio prompt${payload.title ? ` for "${payload.title}"` : ""}.`);
-            if (payload.autoSubmit)
-                yield submitPrompt(textarea);
-            else
-                log("Auto-submit disabled; leaving the prompt for review.");
+            catch (err) {
+                error("Failed to inject the prompt into AI Studio:", err);
+                void reportFailure({ context: "aistudio:inject-error" });
+            }
         });
     }
     /** Waits (generously, since AI Studio loads slowly) for any candidate prompt input to appear. */
@@ -1113,6 +1482,7 @@
                 log(`Initializing ${scriptInfo.name} v${scriptInfo.version} (#${buildNumber})...`);
                 // post-build these double quotes are replaced by backticks (because if backticks are used here, the bundler converts them to double quotes)
                 addStyle("#{{GLOBAL_STYLE}}", "global");
+                registerDevCommands();
                 initObservers();
                 // The script matches both YouTube and Google AI Studio - run only the relevant side.
                 if (location.hostname.endsWith("youtube.com"))
@@ -1125,6 +1495,15 @@
                 return;
             }
         });
+    }
+    /** Registers development-only menu commands. `GM.registerMenuCommand` is only granted in dev builds. */
+    function registerDevCommands() {
+        if (mode !== "development")
+            return;
+        GM.registerMenuCommand("[dev] 清除失敗計數", () => __awaiter(this, void 0, void 0, function* () {
+            yield clearFailureCount();
+            log("Failure counter cleared.");
+        }));
     }
     init();
 
