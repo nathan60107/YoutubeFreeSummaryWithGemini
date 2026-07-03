@@ -11,6 +11,15 @@ export const sparkleIcon = `
   <path d="M5.5 14l.6 1.7L8 16.3l-1.9.6L5.5 19l-.6-2.1L3 16.3l1.9-.6L5.5 14z"/>
 </svg>`.trim();
 
+/**
+ * Spinning loading indicator: a ~270° arc drawn with `currentColor`. Rotation comes from the
+ * `yfswg-spin` CSS keyframes applied to its container while a summary is in progress.
+ */
+export const loadingIcon = `
+<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
+  <path d="M12 3a9 9 0 1 0 6.4 2.65"/>
+</svg>`.trim();
+
 /** Standard settings gear/cog. */
 export const gearIcon = `
 <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true">

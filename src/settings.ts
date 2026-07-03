@@ -4,24 +4,20 @@
  */
 
 import { config, defaultPromptTemplate } from "./config";
+import { openModal } from "./modal";
 import { addStyle } from "./utils";
 
 const overlayId = "yfswg-settings-overlay";
+const styleRef = "yfswg-settings";
 
 /** Opens the settings modal, prefilled from the current config. */
 export function openSettings(): void {
-  if(document.getElementById(overlayId))
-    return; // already open
-
-  addStyle(settingsStyle, "yfswg-settings");
   const data = config.getData();
 
-  const overlay = document.createElement("div");
-  overlay.id = overlayId;
-  overlay.className = "yfswg-overlay";
-
-  overlay.innerHTML = `
-    <div class="yfswg-modal" role="dialog" aria-modal="true" aria-label="YFSWG 設定">
+  const handle = openModal({
+    id: overlayId,
+    label: "YFSWG 設定",
+    innerHtml: `
       <h2 class="yfswg-modal-title">YouTube 摘要設定</h2>
 
       <label class="yfswg-field">
@@ -47,14 +43,19 @@ export function openSettings(): void {
       </label>
 
       <div class="yfswg-actions">
-        <button type="button" class="yfswg-btn-secondary" data-action="reset">重設為預設</button>
+        <button type="button" class="yfswg-modal-btn yfswg-modal-btn--secondary" data-action="reset">重設為預設</button>
         <span class="yfswg-spacer"></span>
-        <button type="button" class="yfswg-btn-secondary" data-action="cancel">取消</button>
-        <button type="button" class="yfswg-btn-primary" data-action="save">儲存</button>
-      </div>
-    </div>`;
+        <button type="button" class="yfswg-modal-btn yfswg-modal-btn--secondary" data-action="cancel">取消</button>
+        <button type="button" class="yfswg-modal-btn yfswg-modal-btn--primary" data-action="save">儲存</button>
+      </div>`,
+  });
+  if(!handle)
+    return; // already open
 
-  const modal = overlay.querySelector(".yfswg-modal") as HTMLElement;
+  if(!document.getElementById(`global-style-${styleRef}`))
+    addStyle(settingsStyle, styleRef);
+
+  const { overlay, close } = handle;
   const promptEl = overlay.querySelector<HTMLTextAreaElement>("[data-field='promptTemplate']")!;
   const langEl = overlay.querySelector<HTMLInputElement>("[data-field='preferredLangs']")!;
   const tsEl = overlay.querySelector<HTMLInputElement>("[data-field='includeTimestamps']")!;
@@ -65,23 +66,6 @@ export function openSettings(): void {
   langEl.value = data.preferredLangs;
   tsEl.checked = data.includeTimestamps;
   autoEl.checked = data.autoSubmit;
-
-  const close = () => {
-    overlay.remove();
-    document.removeEventListener("keydown", onKeydown);
-  };
-  const onKeydown = (e: KeyboardEvent) => {
-    if(e.key === "Escape")
-      close();
-  };
-
-  // Close when clicking the backdrop (but not inside the modal).
-  overlay.addEventListener("click", (e) => {
-    if(e.target === overlay)
-      close();
-  });
-  modal.addEventListener("click", (e) => e.stopPropagation());
-  document.addEventListener("keydown", onKeydown);
 
   overlay.querySelector("[data-action='cancel']")!.addEventListener("click", close);
 
@@ -102,37 +86,10 @@ export function openSettings(): void {
     close();
   });
 
-  document.body.appendChild(overlay);
   promptEl.focus();
 }
 
 const settingsStyle = `
-.yfswg-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 100000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.6);
-}
-.yfswg-modal {
-  width: min(560px, 92vw);
-  max-height: 88vh;
-  overflow-y: auto;
-  box-sizing: border-box;
-  padding: 20px 24px 24px;
-  border-radius: 12px;
-  background: var(--yt-spec-base-background, #fff);
-  color: var(--yt-spec-text-primary, #0f0f0f);
-  font-family: "Roboto", "Arial", sans-serif;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-}
-.yfswg-modal-title {
-  margin: 0 0 16px;
-  font-size: 1.8rem;
-  font-weight: 500;
-}
 .yfswg-field {
   display: block;
   margin-bottom: 16px;
@@ -194,27 +151,5 @@ const settingsStyle = `
 }
 .yfswg-spacer {
   flex: 1;
-}
-.yfswg-btn-primary,
-.yfswg-btn-secondary {
-  padding: 8px 16px;
-  font-size: 1.4rem;
-  font-weight: 500;
-  font-family: inherit;
-  border-radius: 18px;
-  border: none;
-  cursor: pointer;
-}
-.yfswg-btn-primary {
-  background: var(--yt-spec-call-to-action, #065fd4);
-  color: #fff;
-}
-.yfswg-btn-secondary {
-  background: var(--yt-spec-badge-chip-background, rgba(0, 0, 0, 0.08));
-  color: inherit;
-}
-.yfswg-btn-primary:hover,
-.yfswg-btn-secondary:hover {
-  filter: brightness(1.1);
 }
 `;

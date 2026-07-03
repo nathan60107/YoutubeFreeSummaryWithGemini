@@ -4,8 +4,9 @@
  */
 
 import { config } from "./config";
+import { reportFailure } from "./feedback";
 import { stashSummaryPayload } from "./handoff";
-import { gearIcon, sparkleIcon } from "./icons";
+import { gearIcon, loadingIcon, sparkleIcon } from "./icons";
 import { openSettings } from "./settings";
 import { getCurrentSubtitles, type SubtitleResult } from "./subtitles";
 import { addStyle, error, log, onInteraction, openInTab, waitForSelector, warn } from "./utils";
@@ -82,8 +83,8 @@ function addSummaryButton(likeDislike: HTMLElement) {
 
 /** Captures the current video's subtitles when the button is pressed. */
 async function onSummaryClick(btn: HTMLButtonElement) {
-  btn.classList.add("yfswg-busy");
-  btn.classList.remove("yfswg-done", "yfswg-error");
+  const iconEl = btn.querySelector<HTMLElement>(".ytSpecButtonShapeNextIcon");
+  setBusy(btn, iconEl, true);
   try {
     const cfg = config.getData();
     const preferredLangs = cfg.preferredLangs.split(",").map(s => s.trim()).filter(Boolean);
@@ -91,7 +92,10 @@ async function onSummaryClick(btn: HTMLButtonElement) {
     const result = await getCurrentSubtitles(preferredLangs.length > 0 ? { preferredLangs } : {});
     if(!result) {
       warn("No captions are available for this video.");
-      flash(btn, "yfswg-error");
+      void reportFailure({
+        context: "youtube:no-captions",
+        userMessage: "找不到這部影片的字幕／翻譯，無法摘要。請確認影片有字幕，重新整理頁面後再試一次。",
+      });
       return;
     }
 
@@ -107,15 +111,24 @@ async function onSummaryClick(btn: HTMLButtonElement) {
       createdAt: Date.now(),
     });
     openInTab(aiStudioUrl, false); // foreground the AI Studio tab
-    flash(btn, "yfswg-done");
+    // Success: restore silently (handled in finally), no extra indicator.
   }
   catch(err) {
     error("Failed to capture subtitles:", err);
-    flash(btn, "yfswg-error");
+    void reportFailure({ context: "youtube:capture-error" });
   }
   finally {
-    btn.classList.remove("yfswg-busy");
+    setBusy(btn, iconEl, false);
   }
+}
+
+/** Toggles the button's busy state: dims it and swaps the sparkle icon for the spinner (or back). */
+function setBusy(btn: HTMLButtonElement, iconEl: HTMLElement | null, busy: boolean) {
+  btn.classList.toggle("yfswg-busy", busy);
+  if(!iconEl)
+    return;
+  iconEl.classList.toggle("yfswg-spin", busy);
+  iconEl.innerHTML = busy ? loadingIcon : sparkleIcon;
 }
 
 /** Builds the final prompt by substituting the template tokens with the video's data. */
@@ -135,12 +148,6 @@ function getVideoTitle(): string {
   return document.title.replace(/\s*-\s*YouTube\s*$/, "").trim();
 }
 
-/** Briefly applies a status class to the button for visual feedback. */
-function flash(btn: HTMLButtonElement, cls: string, ms = 1500) {
-  btn.classList.add(cls);
-  setTimeout(() => btn.classList.remove(cls), ms);
-}
-
 const buttonStyle = `
 .yfswg-split {
   display: inline-flex;
@@ -153,16 +160,15 @@ const buttonStyle = `
   width: 100%;
   height: 100%;
   display: block;
-  fill: currentColor;
 }
 .yfswg-main.yfswg-busy {
   opacity: 0.6;
   pointer-events: none;
 }
-.yfswg-main.yfswg-done {
-  box-shadow: inset 0 0 0 2px #2ba640;
+.yfswg-split .ytSpecButtonShapeNextIcon.yfswg-spin {
+  animation: yfswg-spin 0.8s linear infinite;
 }
-.yfswg-main.yfswg-error {
-  box-shadow: inset 0 0 0 2px #cc0000;
+@keyframes yfswg-spin {
+  to { transform: rotate(360deg); }
 }
 `;

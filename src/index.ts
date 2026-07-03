@@ -1,5 +1,6 @@
 import { initConfig } from "./config";
-import { buildNumber, scriptInfo } from "./constants";
+import { buildNumber, mode, scriptInfo } from "./constants";
+import { clearFailureCount } from "./feedback";
 import { installTimedtextInterceptor } from "./intercept";
 import { initObservers } from "./observers";
 import { addStyle, domLoaded, error, log } from "./utils";
@@ -28,6 +29,7 @@ async function run() {
     // post-build these double quotes are replaced by backticks (because if backticks are used here, the bundler converts them to double quotes)
     addStyle("#{{GLOBAL_STYLE}}", "global");
 
+    registerDevCommands();
     initObservers();
 
     // The script matches both YouTube and Google AI Studio - run only the relevant side.
@@ -40,6 +42,16 @@ async function run() {
     error("Fatal error:", err);
     return;
   }
+}
+
+/** Registers development-only menu commands. `GM.registerMenuCommand` is only granted in dev builds. */
+function registerDevCommands() {
+  if(mode !== "development")
+    return;
+  GM.registerMenuCommand("[dev] 清除失敗計數", async () => {
+    await clearFailureCount();
+    log("Failure counter cleared.");
+  });
 }
 
 init();

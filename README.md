@@ -22,7 +22,6 @@ Planned features and fixes:
 
 - **Fix private-window support** — the button can currently fail to appear in some logged-out / private-window contexts
 - **Localization** — multi-language user interface
-- **Better failure feedback** — clearer, more helpful messages when capture or injection fails
 - **Disabled state when unavailable** — grey out the button when the video has no usable subtitles / translation
 - **Summarize outside the watch page** — trigger a summary without opening the full watch page (e.g. from thumbnails or listings)
 - **Browser extension version** — a packaged browser extension in addition to the userscript

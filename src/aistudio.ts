@@ -3,8 +3,9 @@
  * injects it into the prompt input, ready for the user to run.
  */
 
+import { reportFailure } from "./feedback";
 import { takeSummaryPayload } from "./handoff";
-import { log, warn, waitForSelector } from "./utils";
+import { error, log, warn, waitForSelector } from "./utils";
 
 /**
  * Candidate selectors for AI Studio's prompt input, most specific first. AI Studio is an Angular
@@ -24,19 +25,29 @@ export async function initAiStudio(): Promise<void> {
   if(!payload)
     return; // normal AI Studio visit, nothing to inject
 
-  const textarea = await waitForPromptInput();
-  if(!textarea) {
-    warn("Could not find the AI Studio prompt input to inject into.");
-    return;
+  try {
+    const textarea = await waitForPromptInput();
+    if(!textarea) {
+      warn("Could not find the AI Studio prompt input to inject into.");
+      void reportFailure({
+        context: "aistudio:no-input",
+        userMessage: "在 AI Studio 找不到輸入框，可能是頁面尚未載入完成或版面改版。請重新整理頁面後再試一次。",
+      });
+      return;
+    }
+
+    injectPrompt(textarea, payload.prompt);
+    log(`Injected subtitles into AI Studio prompt${payload.title ? ` for "${payload.title}"` : ""}.`);
+
+    if(payload.autoSubmit)
+      await submitPrompt(textarea);
+    else
+      log("Auto-submit disabled; leaving the prompt for review.");
   }
-
-  injectPrompt(textarea, payload.prompt);
-  log(`Injected subtitles into AI Studio prompt${payload.title ? ` for "${payload.title}"` : ""}.`);
-
-  if(payload.autoSubmit)
-    await submitPrompt(textarea);
-  else
-    log("Auto-submit disabled; leaving the prompt for review.");
+  catch(err) {
+    error("Failed to inject the prompt into AI Studio:", err);
+    void reportFailure({ context: "aistudio:inject-error" });
+  }
 }
 
 /** Waits (generously, since AI Studio loads slowly) for any candidate prompt input to appear. */
