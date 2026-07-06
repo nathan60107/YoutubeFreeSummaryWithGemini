@@ -1,3 +1,17 @@
+# 0.6.0
+- Localize the whole UI with a new i18n engine and 10 locales; language auto-detects from the browser with a manual override in settings
+- The default prompt follows the interface language and auto-switches while it is unmodified
+- Localize the userscript's `@name` / `@description` header at build time
+
+# 0.5.0
+- Choose which AI service handles the summary — AI Studio, Gemini, ChatGPT, Claude, or Grok — from settings, with per-provider quality notes and a recommended pick
+- Route the transcript to the chosen provider by hostname, with a verified injection cascade and a DOM-quiet settle so submission is reliable
+- Rename the project YoutubeFreeSummaryWithGemini → YoutubeFreeAISummary, since it is no longer Gemini-only
+
+# 0.4.0
+- Support Trusted Types CSP so the script works in incognito windows, where YouTube enforces `require-trusted-types-for 'script'` (previously every `innerHTML` assignment threw a "Sink type mismatch" violation)
+- Insert the "Summarize" button on `/live/` pages
+
 # 0.3.0
 - Grey out the "Summarize" button (with an explanatory hover tooltip) on videos that have no captions, instead of failing after a click
 - Add clearer failure feedback: a spinner while working, a retry dialog, and a copyable debug report
