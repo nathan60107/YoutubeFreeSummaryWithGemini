@@ -1,3 +1,6 @@
+# 0.8.1
+- Match the settings and feedback dialogs to YouTube's dark theme, instead of always showing them in light mode; a custom Enhancer for YouTube palette is still respected
+
 # 0.8.0
 - Reliably (re)insert the summary button across YouTube's SPA navigation: the watch action row is rebuilt a few times right after each in-page navigation, which previously dropped the button when moving in and out of the watch page
 

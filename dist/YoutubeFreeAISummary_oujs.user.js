@@ -10,7 +10,7 @@
 // @name:pt-BR         Resumo de YouTube com IA grátis
 // @name:ru            Бесплатное AI-резюме YouTube
 // @namespace         https://github.com/nathan60107/YoutubeFreeAISummary
-// @version           0.8.0
+// @version           0.8.1
 // @description       Capture a YouTube video's on-page subtitles and send them straight to your chosen AI (AI Studio, Gemini, ChatGPT, Claude, or Grok) for a free summary
 // @description:zh-TW  擷取 YouTube 影片頁面上的字幕，直接送到你選擇的 AI（AI Studio、Gemini、ChatGPT、Claude 或 Grok）做免費摘要
 // @description:zh-CN  抓取 YouTube 视频页面上的字幕，直接发送到你选择的 AI（AI Studio、Gemini、ChatGPT、Claude 或 Grok）做免费摘要
@@ -26,7 +26,7 @@
 // @license           MIT
 // @author            nathan60107
 // @copyright         nathan60107 (https://github.com/nathan60107)
-// @icon              https://raw.githubusercontent.com/nathan60107/YoutubeFreeAISummary/main/assets/icon.svg?b=5a060d0
+// @icon              https://raw.githubusercontent.com/nathan60107/YoutubeFreeAISummary/main/assets/icon.svg?b=8edbe6d
 // @match             *://*.youtube.com/*
 // @match             *://aistudio.google.com/*
 // @match             *://gemini.google.com/*
@@ -47,7 +47,7 @@
 // @grant             GM.openInTab
 // @grant             unsafeWindow
 // @noframes
-// @resource          img-icon https://raw.githubusercontent.com/nathan60107/YoutubeFreeAISummary/main/assets/icon.svg?b=5a060d0
+// @resource          img-icon https://raw.githubusercontent.com/nathan60107/YoutubeFreeAISummary/main/assets/icon.svg?b=8edbe6d
 // @require           https://cdn.jsdelivr.net/npm/@sv443-network/userutils@6.3.0/dist/index.global.js
 // ==/UserScript==
 
@@ -88,7 +88,7 @@
 
     const modeRaw = "production";
     const hostRaw = "openuserjs";
-    const buildNumberRaw = "5a060d0";
+    const buildNumberRaw = "8edbe6d";
     /** The mode in which the script was built (production or development) */
     const mode = (modeRaw.match(/^#{{.+}}$/) ? "production" : modeRaw);
     /** Path to the GitHub repo in the format "User/Repo" */
@@ -971,6 +971,7 @@
         const overlay = document.createElement("div");
         overlay.id = opts.id;
         overlay.className = "yfas-modal-overlay";
+        mirrorYouTubeTheme(overlay);
         setInnerHtml(overlay, `<div class="yfas-modal-box" role="${(_a = opts.role) !== null && _a !== void 0 ? _a : "dialog"}" aria-modal="true" aria-label="${opts.label}">${opts.innerHtml}</div>`);
         const modal = overlay.querySelector(".yfas-modal-box");
         const close = () => {
@@ -989,6 +990,46 @@
         document.addEventListener("keydown", onKeydown);
         document.body.appendChild(overlay);
         return { overlay, modal, close };
+    }
+    // The modal sits under `<body>`, a sibling of `<ytd-app>`, and native YouTube doesn't publish its
+    // `--yt-spec-*` tokens at document scope, so `var(--yt-spec-…)` falls back to light even in dark
+    // mode. Enhancer for YouTube does publish them globally, so its palette is inherited as-is.
+    const darkTokens = {
+        "--yt-spec-base-background": "#0f0f0f",
+        "--yt-spec-text-primary": "#f1f1f1",
+        "--yt-spec-text-secondary": "#aaa",
+        "--yt-spec-call-to-action": "#3ea6ff",
+        "--yt-spec-badge-chip-background": "rgba(255, 255, 255, 0.1)",
+        "--yt-spec-10-percent-layer": "rgba(255, 255, 255, 0.2)",
+    };
+    function mirrorYouTubeTheme(overlay) {
+        const dark = isYouTubeDark();
+        overlay.style.colorScheme = dark ? "dark" : "light"; // native widgets: scrollbars, <select>, caret
+        // If the tokens already reach the modal (Enhancer for YouTube), keep its palette; else supply dark.
+        if (getComputedStyle(document.body).getPropertyValue("--yt-spec-base-background").trim())
+            return;
+        if (dark)
+            for (const [name, value] of Object.entries(darkTokens))
+                overlay.style.setProperty(name, value);
+    }
+    /** Whether YouTube is dark, from the luminance of its painted background, with attribute/OS fallback. */
+    function isYouTubeDark() {
+        for (const el of [document.querySelector("ytd-app"), document.body, document.documentElement]) {
+            const rgba = el && parseRgba(getComputedStyle(el).backgroundColor);
+            if (rgba && rgba[3] > 0)
+                return 0.299 * rgba[0] + 0.587 * rgba[1] + 0.114 * rgba[2] < 128;
+        }
+        return document.documentElement.hasAttribute("dark")
+            || matchMedia("(prefers-color-scheme: dark)").matches;
+    }
+    /** Parses a `rgb()/rgba()` string into `[r, g, b, a]`, or `null` if it isn't in that form. */
+    function parseRgba(color) {
+        var _a;
+        const m = /rgba?\(([^)]+)\)/.exec(color);
+        if (!m)
+            return null;
+        const p = m[1].split(",").map(n => parseFloat(n));
+        return [p[0], p[1], p[2], (_a = p[3]) !== null && _a !== void 0 ? _a : 1];
     }
     const modalStyle = `
 .yfas-modal-overlay {
