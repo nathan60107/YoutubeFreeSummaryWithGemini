@@ -29,8 +29,8 @@ import {
   type Json3Response,
   type SubtitleResult,
   type YtPlayerResponse,
-} from "./subtitles";
-import { warn } from "./utils";
+} from "./subtitle-core";
+import { warn } from "./log";
 
 /** A subtitle capture plus the title/URL of the (remote) video it came from. */
 export type RemoteSubtitleResult = SubtitleResult & {

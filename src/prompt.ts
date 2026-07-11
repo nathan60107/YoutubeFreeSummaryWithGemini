@@ -6,7 +6,7 @@
  */
 
 import { t } from "./i18n";
-import type { SubtitleResult } from "./subtitles";
+import type { SubtitleResult } from "./subtitle-core";
 
 /**
  * Substitutes the template tokens with the video's data. An empty template means "follow the

@@ -16,7 +16,8 @@ import { loadingIcon, sparkleIcon } from "./icons";
 import { buildPrompt } from "./prompt";
 import { getProviderById } from "./providers";
 import { getSubtitlesForVideo } from "./remote-subtitles";
-import { addStyle, error, log, onInteraction, openInTab, setInnerHtml, warn } from "./utils";
+import { error, log, warn } from "./log";
+import { addStyle, onInteraction, openInTab, setInnerHtml } from "./utils";
 
 /** Class of the injected overlay button, also used to guard against double-injection. */
 const btnClass = "yfas-thumb-btn";

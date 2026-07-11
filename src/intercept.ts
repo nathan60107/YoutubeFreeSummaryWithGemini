@@ -8,7 +8,7 @@
  * on the page realm via `unsafeWindow`.
  */
 
-import { log } from "./utils";
+import { log } from "./log";
 
 const timedtextMarker = "/api/timedtext";
 

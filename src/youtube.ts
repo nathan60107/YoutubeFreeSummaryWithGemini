@@ -12,7 +12,8 @@ import { openSettings } from "./settings";
 import { captureAndHandoff } from "./summarize";
 import { hasCaptionsAvailable } from "./subtitles";
 import { initThumbnailButtons } from "./thumbnails";
-import { addStyle, error, onInteraction, setInnerHtml, waitForSelector, warn } from "./utils";
+import { error, warn } from "./log";
+import { addStyle, onInteraction, setInnerHtml, waitForSelector } from "./utils";
 
 /** id of the injected button, used to avoid inserting duplicates. */
 const btnId = "yfas-summary-btn";

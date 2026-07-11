@@ -11,7 +11,8 @@
 import { reportFailure } from "./feedback";
 import { takeSummaryPayload } from "./handoff";
 import { t, type TranslationKey } from "./i18n";
-import { error, log, waitForSelector, warn } from "./utils";
+import { error, log, warn } from "./log";
+import { waitForSelector } from "./utils";
 
 /**
  * How a provider's prompt field accepts text:

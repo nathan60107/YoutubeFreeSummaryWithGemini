@@ -13,7 +13,8 @@ import { t } from "./i18n";
 import { buildPrompt } from "./prompt";
 import { getProviderById } from "./providers";
 import { getCurrentSubtitles } from "./subtitles";
-import { log, openInTab, warn } from "./utils";
+import { log, warn } from "./log";
+import { openInTab } from "./utils";
 
 /** Reads the current video's title from the watch page, falling back to the document title. */
 function getVideoTitle(): string {

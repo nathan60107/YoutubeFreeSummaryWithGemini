@@ -12,7 +12,8 @@
 import { reportFailure } from "./feedback";
 import { watchUrl } from "./remote-subtitles";
 import { captureAndHandoff } from "./summarize";
-import { error, log, openInTab, waitForSelector, warn } from "./utils";
+import { error, log, warn } from "./log";
+import { openInTab, waitForSelector } from "./utils";
 
 /** URL-hash marker identifying a watch tab we opened to auto-summarize. */
 const marker = "yfas-autosummarize";

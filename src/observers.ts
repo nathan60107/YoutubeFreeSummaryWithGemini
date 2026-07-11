@@ -1,5 +1,5 @@
 import { SelectorListenerOptions, SelectorObserver, type SelectorObserverConstructorOptions } from "@sv443-network/userutils";
-import { error } from "./utils";
+import { error } from "./log";
 
 export type ObserverName =
   | "body";

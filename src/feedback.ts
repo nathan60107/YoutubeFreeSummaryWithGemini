@@ -10,7 +10,8 @@
 import { buildNumber, host, platformNames, repo, scriptInfo } from "./constants";
 import { t } from "./i18n";
 import { openModal } from "./modal";
-import { addStyle, getRecentLogs } from "./utils";
+import { getRecentLogs } from "./log";
+import { addStyle } from "./utils";
 
 /** GM storage key holding the recent failure timestamps (JSON array of epoch ms). */
 const failuresKey = "yfas-recent-failures";

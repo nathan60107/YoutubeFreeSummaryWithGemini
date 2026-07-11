@@ -5,7 +5,8 @@ import { clearFailureCount } from "./feedback";
 import { initI18n, t } from "./i18n";
 import { installTimedtextInterceptor } from "./intercept";
 import { initObservers } from "./observers";
-import { addStyle, domLoaded, error, log } from "./utils";
+import { error, log } from "./log";
+import { addStyle, domLoaded } from "./utils";
 import { initYoutube } from "./youtube";
 import { getProviderByHost, initProviderTarget } from "./providers";
 
