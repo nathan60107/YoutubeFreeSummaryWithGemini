@@ -12,8 +12,9 @@ import { openSettings } from "./settings";
 import { captureAndHandoff } from "./summarize";
 import { hasCaptionsAvailable } from "./subtitles";
 import { initThumbnailButtons } from "./thumbnails";
-import { error, warn } from "./log";
-import { addStyle, onInteraction, setInnerHtml, waitForSelector } from "./utils";
+import { debounce } from "@sv443-network/userutils";
+import { error } from "./log";
+import { addStyle, onInteraction, setInnerHtml } from "./utils";
 
 /** id of the injected button, used to avoid inserting duplicates. */
 const btnId = "yfas-summary-btn";
@@ -25,6 +26,13 @@ const btnId = "yfas-summary-btn";
  */
 const likeDislikeSelector = "ytd-watch-metadata segmented-like-dislike-button-view-model";
 
+/** Observes the action row so the button can be re-inserted while YouTube re-stamps it; see {@linkcode reconcileButton}. */
+let rowObserver: MutationObserver | undefined;
+/** Steady-state countdown; the button is deemed stable once it survives this without re-insertion. */
+let settleTimer: ReturnType<typeof setTimeout> | undefined;
+/** How long the button must stay put before the row counts as settled and we stop observing. */
+const settleMs = 2500;
+
 /** Registers the button injection. Call once on the YouTube side after DOM load. */
 export function initYoutube() {
   addStyle(buttonStyle, "yfas-button");
@@ -32,11 +40,69 @@ export function initYoutube() {
   // Off-page trigger: sparkle button on video thumbnails across list surfaces (home/search/related).
   initThumbnailButtons();
 
-  void ensureSummaryButton();
-  // The action row is re-rendered on SPA navigation, so re-insert after each navigation.
-  window.addEventListener("yt-navigate-finish", () => void ensureSummaryButton());
+  // YouTube is a SPA and rebuilds the watch action row asynchronously after each navigation, so we
+  // re-sync every navigation rather than inserting just once.
+  window.addEventListener("yt-navigate-finish", syncButtonForPage);
   // Re-label the button in place when the user changes the interface language in settings.
   window.addEventListener("yfas-lang-changed", relabelButton);
+  syncButtonForPage();
+}
+
+/** Whether the current location is a page that should carry the summary button. */
+function isWatchPage() {
+  return location.pathname.startsWith("/watch") || location.pathname.startsWith("/live/");
+}
+
+/** On watch pages, start observing and try to insert; elsewhere, stop. */
+function syncButtonForPage() {
+  if(!isWatchPage()) {
+    stopObserving();
+    return;
+  }
+  observeRow();
+  reconcileButton();
+}
+
+/** (Re)connects the observer to the watch container so {@linkcode reconcileButton} runs on every row rebuild. */
+function observeRow() {
+  const target = document.querySelector("ytd-watch-flexy") ?? document.body;
+  rowObserver ??= new MutationObserver(debounce(reconcileButton, 150));
+  rowObserver.disconnect();
+  rowObserver.observe(target, { childList: true, subtree: true });
+}
+
+/** Disconnects the row observer and cancels any pending steady-state check. */
+function stopObserving() {
+  rowObserver?.disconnect();
+  rowObserver = undefined;
+  clearTimeout(settleTimer);
+  settleTimer = undefined;
+}
+
+/**
+ * Inserts the button if it's missing. YouTube re-stamps the action row a few times after navigation,
+ * discarding our button each time, so each re-insertion restarts the settle countdown; the row is
+ * treated as settled (and observing stops) once the button survives it.
+ */
+function reconcileButton() {
+  if(!isWatchPage())
+    return;
+  if(document.getElementById(btnId)?.isConnected)
+    return;
+  const anchor = document.querySelector<HTMLElement>(likeDislikeSelector);
+  if(anchor)
+    addSummaryButton(anchor);
+  if(document.getElementById(btnId)?.isConnected)
+    scheduleSettleCheck();
+}
+
+/** (Re)starts the steady-state countdown: if the button is still in place when it fires, stop observing. */
+function scheduleSettleCheck() {
+  clearTimeout(settleTimer);
+  settleTimer = setTimeout(() => {
+    if(document.getElementById(btnId)?.isConnected)
+      stopObserving();
+  }, settleMs);
 }
 
 /** Re-applies the current interface language to an already-injected button (after a language change). */
@@ -56,21 +122,6 @@ function relabelButton() {
     gearBtn.title = t("button.settings");
     gearBtn.setAttribute("aria-label", t("button.settings"));
   }
-}
-
-/**
- * Polls the live DOM for the like/dislike anchor and inserts the button next to it. Polling
- * directly (rather than via SelectorObserver) avoids the observer's debounce dropping the only
- * trigger, which made the button intermittently fail to appear.
- */
-async function ensureSummaryButton() {
-  if(!location.pathname.startsWith("/watch") && !location.pathname.startsWith("/live/"))
-    return;
-  const anchor = await waitForSelector<HTMLElement>(likeDislikeSelector, 15000);
-  if(anchor)
-    addSummaryButton(anchor);
-  else
-    warn("like/dislike anchor not found within timeout; button not inserted");
 }
 
 /** Shared YouTube button-shape classes so our button inherits the native (visible) styling. */

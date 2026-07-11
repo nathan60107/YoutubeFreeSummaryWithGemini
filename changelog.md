@@ -1,3 +1,6 @@
+# 0.8.0
+- Reliably (re)insert the summary button across YouTube's SPA navigation: the watch action row is rebuilt a few times right after each in-page navigation, which previously dropped the button when moving in and out of the watch page
+
 # 0.7.0
 - Summarize a video straight from its thumbnail — on the home feed, search, related list, or a channel page — without opening the watch page first: hover for a sparkle button that captures its subtitles and hands them to your chosen AI
 - Capture public videos off-page via YouTube's ANDROID player, whose caption tracks aren't PoToken-gated (the static caption URL from the normal web response returns an empty body)

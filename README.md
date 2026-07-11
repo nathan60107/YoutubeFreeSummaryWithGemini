@@ -22,7 +22,6 @@ It is built to solve the two problems that other summary scripts run into: subti
 
 Planned features and fixes:
 
-- **Fix button not appearing on SPA navigation** — YouTube navigates between pages without a full reload, and the button sometimes fails to be (re)generated when moving in and out of the watch page
 - **Browser extension version** — a packaged browser extension in addition to the userscript
 
 ## Installation

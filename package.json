@@ -1,7 +1,7 @@
 {
   "name": "youtube-free-ai-summary",
   "userscriptName": "YoutubeFreeAISummary",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Capture a YouTube video's on-page subtitles and send them straight to your chosen AI (AI Studio, Gemini, ChatGPT, Claude, or Grok) for a free summary",
   "main": "index.js",
   "type": "module",
