@@ -5,13 +5,14 @@
 
 import { config } from "./config";
 import { reportFailure } from "./feedback";
-import { stashSummaryPayload } from "./handoff";
 import { t } from "./i18n";
 import { gearIcon, loadingIcon, sparkleIcon } from "./icons";
 import { getProviderById } from "./providers";
 import { openSettings } from "./settings";
-import { getCurrentSubtitles, hasCaptionsAvailable, type SubtitleResult } from "./subtitles";
-import { addStyle, error, log, onInteraction, openInTab, setInnerHtml, waitForSelector, warn } from "./utils";
+import { captureAndHandoff } from "./summarize";
+import { hasCaptionsAvailable } from "./subtitles";
+import { initThumbnailButtons } from "./thumbnails";
+import { addStyle, error, onInteraction, setInnerHtml, waitForSelector, warn } from "./utils";
 
 /** id of the injected button, used to avoid inserting duplicates. */
 const btnId = "yfas-summary-btn";
@@ -26,6 +27,9 @@ const likeDislikeSelector = "ytd-watch-metadata segmented-like-dislike-button-vi
 /** Registers the button injection. Call once on the YouTube side after DOM load. */
 export function initYoutube() {
   addStyle(buttonStyle, "yfas-button");
+
+  // Off-page trigger: sparkle button on video thumbnails across list surfaces (home/search/related).
+  initThumbnailButtons();
 
   void ensureSummaryButton();
   // The action row is re-rendered on SPA navigation, so re-insert after each navigation.
@@ -144,31 +148,7 @@ async function onSummaryClick(btn: HTMLButtonElement) {
   const iconEl = btn.querySelector<HTMLElement>(".ytSpecButtonShapeNextIcon");
   setBusy(btn, iconEl, true);
   try {
-    const cfg = config.getData();
-    const preferredLangs = cfg.preferredLangs.split(",").map(s => s.trim()).filter(Boolean);
-
-    const result = await getCurrentSubtitles(preferredLangs.length > 0 ? { preferredLangs } : {});
-    if(!result) {
-      warn("No captions are available for this video.");
-      void reportFailure({
-        context: "youtube:no-captions",
-        userMessage: t("error.noCaptions"),
-      });
-      return;
-    }
-
-    log(
-      `Captured ${result.segments.length} subtitle lines `
-      + `(${result.trackName}, lang=${result.lang}, via ${result.source}).`,
-    );
-
-    await stashSummaryPayload({
-      prompt: buildPrompt(result, cfg.promptTemplate, cfg.includeTimestamps),
-      autoSubmit: cfg.autoSubmit,
-      title: getVideoTitle(),
-      createdAt: Date.now(),
-    });
-    openInTab(getProviderById(cfg.provider).newChatUrl, false); // foreground the AI provider tab
+    await captureAndHandoff();
     // Success: restore silently (handled in finally), no extra indicator.
   }
   catch(err) {
@@ -187,24 +167,6 @@ function setBusy(btn: HTMLButtonElement, iconEl: HTMLElement | null, busy: boole
     return;
   iconEl.classList.toggle("yfas-spin", busy);
   setInnerHtml(iconEl, busy ? loadingIcon : sparkleIcon);
-}
-
-/** Builds the final prompt by substituting the template tokens with the video's data. */
-function buildPrompt(result: SubtitleResult, template: string, includeTimestamps: boolean): string {
-  const transcript = includeTimestamps ? result.timedText : result.text;
-  // Empty template = follow the interface language: fall back to the active locale's default prompt.
-  return (template.trim() || t("prompt.default"))
-    .split("{{title}}").join(getVideoTitle())
-    .split("{{url}}").join(location.href)
-    .split("{{transcript}}").join(transcript);
-}
-
-/** Reads the current video's title from the watch page, falling back to the document title. */
-function getVideoTitle(): string {
-  const fromMeta = document.querySelector("ytd-watch-metadata h1")?.textContent?.trim();
-  if(fromMeta)
-    return fromMeta;
-  return document.title.replace(/\s*-\s*YouTube\s*$/, "").trim();
 }
 
 const buttonStyle = `

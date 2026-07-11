@@ -1,3 +1,4 @@
+import { isAutoSummaryRequest, runAutoSummary } from "./auto-summarize";
 import { config, initConfig } from "./config";
 import { buildNumber, mode, scriptInfo } from "./constants";
 import { clearFailureCount } from "./feedback";
@@ -28,6 +29,12 @@ async function init() {
 async function run() {
   try {
     log(`Initializing ${scriptInfo.name} v${scriptInfo.version} (#${buildNumber})...`);
+
+    // A watch tab we opened to summarize a gated video (see auto-summarize.ts): capture + close, no UI.
+    if(location.hostname.endsWith("youtube.com") && isAutoSummaryRequest()) {
+      void runAutoSummary();
+      return;
+    }
 
     // post-build these double quotes are replaced by backticks (because if backticks are used here, the bundler converts them to double quotes)
     addStyle("#{{GLOBAL_STYLE}}", "global");

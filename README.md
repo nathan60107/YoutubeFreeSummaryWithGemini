@@ -16,12 +16,13 @@ It is built to solve the two problems that other summary scripts run into: subti
 - **No length limit** — Hands the transcript to the AI's input directly rather than through URL parameters, avoiding the character cap that truncates other scripts
 - **Completely free** — No API key and no paid service required; you only need to be logged into the AI service you picked
 - **One click** — Adds a single button to the YouTube player page that captures the subtitles and opens your chosen AI for you
+- **Summarize outside the watch page** — Hover any video thumbnail (home, search, related, channel) for a sparkle button that summarizes it without you opening the video. Public videos are captured instantly off-page; member-only and age-restricted ones open briefly in a new tab (using your signed-in session) that summarizes and closes itself, leaving your current page untouched
 
 ## Roadmap
 
 Planned features and fixes:
 
-- **Summarize outside the watch page** — trigger a summary without opening the full watch page (e.g. from thumbnails or listings)
+- **Fix button not appearing on SPA navigation** — YouTube navigates between pages without a full reload, and the button sometimes fails to be (re)generated when moving in and out of the watch page
 - **Browser extension version** — a packaged browser extension in addition to the userscript
 
 ## Installation

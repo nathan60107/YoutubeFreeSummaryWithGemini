@@ -1,3 +1,8 @@
+# 0.7.0
+- Summarize a video straight from its thumbnail — on the home feed, search, related list, or a channel page — without opening the watch page first: hover for a sparkle button that captures its subtitles and hands them to your chosen AI
+- Capture public videos off-page via YouTube's ANDROID player, whose caption tracks aren't PoToken-gated (the static caption URL from the normal web response returns an empty body)
+- Handle member-only and age-restricted videos off-page by opening a short-lived tab that captures them with your signed-in session and closes itself, leaving your current page and scroll position untouched
+
 # 0.6.0
 - Localize the whole UI with a new i18n engine and 10 locales; language auto-detects from the browser with a manual override in settings
 - The default prompt follows the interface language and auto-switches while it is unmodified
