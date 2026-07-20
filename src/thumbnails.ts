@@ -9,7 +9,7 @@
 
 import { openAutoSummaryTab } from "./auto-summarize";
 import { config } from "./config";
-import { reportFailure } from "./feedback";
+import { notify, reportFailure } from "./feedback";
 import { stashSummaryPayload } from "./handoff";
 import { t } from "./i18n";
 import { loadingIcon, sparkleIcon } from "./icons";
@@ -122,8 +122,10 @@ async function onThumbClick(btn: HTMLElement, videoId: string): Promise<void> {
     }
 
     if (!result) {
+      // No captions is an expected outcome, not a failure: just tell the user, without counting it
+      // toward the repeated-failure escalation (which would wrongly prompt them to file an issue).
       warn(`No captions are available for video ${videoId}.`);
-      void reportFailure({ context: "youtube:thumbnail:no-captions", userMessage: t("error.noCaptions") });
+      notify(t("error.noCaptions"));
       return;
     }
 

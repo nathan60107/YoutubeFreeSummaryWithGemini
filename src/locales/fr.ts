@@ -38,6 +38,8 @@ export const fr: Translations = {
   "feedback.debug.issue": "Aller au suivi des problèmes ↗",
   "feedback.close": "Fermer",
 
+  "notice.title": "Aucun sous-titre trouvé",
+
   "error.noCaptions": "Aucun sous-titre ni traduction n’a été trouvé pour cette vidéo, elle ne peut donc pas être résumée. Assurez-vous que la vidéo a des sous-titres, puis actualisez et réessayez.",
   "error.noInput": "Impossible de trouver le champ de saisie sur %1 — la page n’a peut-être pas fini de charger, ou sa mise en page a changé. Veuillez actualiser et réessayer.",
 

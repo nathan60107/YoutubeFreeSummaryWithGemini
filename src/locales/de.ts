@@ -38,6 +38,8 @@ export const de: Translations = {
   "feedback.debug.issue": "Zum Issue-Tracker ↗",
   "feedback.close": "Schließen",
 
+  "notice.title": "Keine Untertitel gefunden",
+
   "error.noCaptions": "Für dieses Video wurden keine Untertitel/Übersetzungen gefunden, daher kann es nicht zusammengefasst werden. Stelle sicher, dass das Video Untertitel hat, lade die Seite neu und versuche es erneut.",
   "error.noInput": "Das Eingabefeld auf %1 wurde nicht gefunden – die Seite ist möglicherweise noch nicht fertig geladen oder ihr Layout hat sich geändert. Bitte lade die Seite neu und versuche es erneut.",
 

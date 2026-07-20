@@ -1,10 +1,14 @@
 /**
- * Shared failure feedback used by both the YouTube and AI provider sides.
+ * Shared user feedback used by both the YouTube and AI provider sides.
  *
- * On a failure we show a modal telling the user to refresh and retry. Failure timestamps are
- * persisted (via GM storage, shared across tabs) so that if the user hits two failures within
- * five minutes — even across a page refresh or across the YouTube/AI provider tabs — the modal
- * escalates to include a copyable debug report and a prompt to file a GitHub issue.
+ * On a failure ({@linkcode reportFailure}) we show a modal telling the user to refresh and retry.
+ * Failure timestamps are persisted (via GM storage, shared across tabs) so that if the user hits two
+ * failures within five minutes — even across a page refresh or across the YouTube/AI provider tabs —
+ * the modal escalates to include a copyable debug report and a prompt to file a GitHub issue.
+ *
+ * Expected, non-error conditions (e.g. a video simply has no captions) go through {@linkcode notify}
+ * instead, which shows a plain informational modal and is deliberately *not* counted toward that
+ * escalation — otherwise a couple of caption-less videos would wrongly prompt the user to file a bug.
  */
 
 import { buildNumber, host, platformNames, repo, scriptInfo } from "./constants";
@@ -40,7 +44,22 @@ export interface FailureInfo {
  */
 export async function reportFailure(info: FailureInfo): Promise<void> {
   const count = await trackFailure();
-  showModal(info, count >= escalateThreshold);
+  showModal({
+    title: t("feedback.title"),
+    role: "alertdialog",
+    message: info.userMessage ?? t("feedback.defaultMessage"),
+    context: info.context,
+    escalate: count >= escalateThreshold,
+  });
+}
+
+/**
+ * Notifies the user of an *expected*, non-error condition — e.g. a video simply has no captions, so
+ * there is nothing to summarize. Unlike {@linkcode reportFailure} this never records a failure or
+ * escalates to the debug report, so a run of these can't trigger the "please file an issue" prompt.
+ */
+export function notify(message: string): void {
+  showModal({ title: t("notice.title"), role: "dialog", message, escalate: false });
 }
 
 /** Clears the persisted failure counter. Exposed for the dev-only "reset" menu command. */
@@ -98,16 +117,31 @@ function buildDebugReport(context: string): string {
   ].join("\n");
 }
 
+/** What {@linkcode showModal} needs to render either a failure report or an expected-condition notice. */
+interface ModalOptions {
+  /** Modal heading (and accessible label). */
+  title: string;
+  /** ARIA role: `alertdialog` for failures, `dialog` for a benign notice. */
+  role: "alertdialog" | "dialog";
+  /** Body text shown to the user. */
+  message: string;
+  /** Machine-ish label of where this came from; only used when `escalate` builds the debug report. */
+  context?: string;
+  /** When true, appends the copyable debug report + issue-tracker prompt. */
+  escalate: boolean;
+}
+
 /** Builds and shows the modal. Only one is shown at a time. */
-function showModal(info: FailureInfo, escalate: boolean): void {
-  const report = escalate ? buildDebugReport(info.context) : "";
+function showModal(opts: ModalOptions): void {
+  const { title, role, message, escalate } = opts;
+  const report = escalate ? buildDebugReport(opts.context ?? "") : "";
 
   const handle = openModal({
     id: overlayId,
-    label: t("feedback.title"),
-    role: "alertdialog",
+    label: title,
+    role,
     innerHtml: `
-      <h2 class="yfas-modal-title">${t("feedback.title")}</h2>
+      <h2 class="yfas-modal-title">${title}</h2>
       <p class="yfas-fb-msg"></p>
       ${escalate ? `
         <div class="yfas-fb-debug">
@@ -136,7 +170,7 @@ function showModal(info: FailureInfo, escalate: boolean): void {
   const { overlay, close } = handle;
 
   // Assign text via textContent to avoid injecting untrusted strings as HTML.
-  overlay.querySelector<HTMLElement>(".yfas-fb-msg")!.textContent = info.userMessage ?? t("feedback.defaultMessage");
+  overlay.querySelector<HTMLElement>(".yfas-fb-msg")!.textContent = message;
   overlay.querySelector("[data-action='close']")!.addEventListener("click", close);
 
   if(escalate) {

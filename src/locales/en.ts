@@ -49,6 +49,9 @@ export const en = {
   "feedback.debug.issue": "Go to the issue tracker ↗",
   "feedback.close": "Close",
 
+  // Notice modal — an expected, non-error condition (e.g. a video simply has no captions)
+  "notice.title": "No captions found",
+
   // Error messages shown in the feedback modal
   "error.noCaptions": "No subtitles/translations were found for this video, so it can't be summarized. Make sure the video has captions, then refresh and try again.",
   "error.noInput": "Couldn't find the input box on %1 — the page may not have finished loading, or its layout changed. Please refresh and try again.",

@@ -38,6 +38,8 @@ export const es: Translations = {
   "feedback.debug.issue": "Ir al gestor de incidencias ↗",
   "feedback.close": "Cerrar",
 
+  "notice.title": "No se encontraron subtítulos",
+
   "error.noCaptions": "No se encontraron subtítulos ni traducciones para este vídeo, así que no se puede resumir. Asegúrate de que el vídeo tenga subtítulos, actualiza la página e inténtalo de nuevo.",
   "error.noInput": "No se encontró el cuadro de texto en %1. Puede que la página no haya terminado de cargar o que su diseño haya cambiado. Actualiza la página e inténtalo de nuevo.",
 

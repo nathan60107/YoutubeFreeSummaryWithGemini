@@ -38,6 +38,8 @@ export const zhTW: Translations = {
   "feedback.debug.issue": "前往問題回報頁 ↗",
   "feedback.close": "關閉",
 
+  "notice.title": "找不到字幕",
+
   "error.noCaptions": "找不到這部影片的字幕／翻譯，無法摘要。請確認影片有字幕，重新整理頁面後再試一次。",
   "error.noInput": "在 %1 找不到輸入框，可能是頁面尚未載入完成或版面改版。請重新整理頁面後再試一次。",
 

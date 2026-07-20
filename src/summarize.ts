@@ -7,7 +7,7 @@
  */
 
 import { config } from "./config";
-import { reportFailure } from "./feedback";
+import { notify } from "./feedback";
 import { stashSummaryPayload } from "./handoff";
 import { t } from "./i18n";
 import { buildPrompt } from "./prompt";
@@ -28,8 +28,8 @@ function getVideoTitle(): string {
  * Captures the current watch page's subtitles and stashes a payload for the AI provider tab, then
  * opens that tab. Assumes we're on a watch page with the player available.
  *
- * @returns `true` if a summary was handed off; `false` if the video has no captions (a no-captions
- *   failure is reported to the user in that case).
+ * @returns `true` if a summary was handed off; `false` if the video has no captions (the user is
+ *   notified of that expected condition, but it is not counted as a failure).
  * @throws if capture itself fails (the caller is expected to report the error).
  */
 export async function captureAndHandoff(): Promise<boolean> {
@@ -38,8 +38,10 @@ export async function captureAndHandoff(): Promise<boolean> {
 
   const result = await getCurrentSubtitles(preferredLangs.length > 0 ? { preferredLangs } : {});
   if(!result) {
+    // No captions is an expected outcome, not a failure: notify without counting it toward the
+    // repeated-failure escalation (which would wrongly prompt the user to file an issue).
     warn("No captions are available for this video.");
-    void reportFailure({ context: "youtube:no-captions", userMessage: t("error.noCaptions") });
+    notify(t("error.noCaptions"));
     return false;
   }
 

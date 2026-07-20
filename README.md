@@ -22,6 +22,7 @@ It is built to solve the two problems that other summary scripts run into: subti
 
 Planned features and fixes:
 
+- **Fix member-only videos not being summarized**
 - **Browser extension version** — a packaged browser extension in addition to the userscript
 
 ## Installation

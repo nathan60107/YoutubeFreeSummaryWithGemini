@@ -38,6 +38,8 @@ export const zhCN: Translations = {
   "feedback.debug.issue": "前往问题反馈页 ↗",
   "feedback.close": "关闭",
 
+  "notice.title": "找不到字幕",
+
   "error.noCaptions": "找不到这部视频的字幕／翻译，无法摘要。请确认视频有字幕，刷新页面后再试一次。",
   "error.noInput": "在 %1 找不到输入框，可能是页面尚未加载完成或版面改版。请刷新页面后再试一次。",
 

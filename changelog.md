@@ -1,3 +1,6 @@
+# 0.8.2
+- Treat a video that simply has no captions as a plain notice instead of a failure, so hitting a couple of caption-less videos no longer escalates to the copyable debug report and a prompt to file an issue
+
 # 0.8.1
 - Match the settings and feedback dialogs to YouTube's dark theme, instead of always showing them in light mode; a custom Enhancer for YouTube palette is still respected
 

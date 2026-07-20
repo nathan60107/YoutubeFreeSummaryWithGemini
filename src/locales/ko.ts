@@ -38,6 +38,8 @@ export const ko: Translations = {
   "feedback.debug.issue": "이슈 트래커로 이동 ↗",
   "feedback.close": "닫기",
 
+  "notice.title": "자막을 찾을 수 없습니다",
+
   "error.noCaptions": "이 동영상의 자막/번역을 찾을 수 없어 요약할 수 없습니다. 동영상에 자막이 있는지 확인한 뒤 새로고침하고 다시 시도해 주세요.",
   "error.noInput": "%1에서 입력창을 찾지 못했습니다. 페이지 로딩이 끝나지 않았거나 레이아웃이 바뀌었을 수 있습니다. 새로고침한 후 다시 시도해 주세요.",
 

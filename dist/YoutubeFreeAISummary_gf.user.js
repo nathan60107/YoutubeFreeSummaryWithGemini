@@ -10,7 +10,7 @@
 // @name:pt-BR         Resumo de YouTube com IA grátis
 // @name:ru            Бесплатное AI-резюме YouTube
 // @namespace         https://github.com/nathan60107/YoutubeFreeAISummary
-// @version           0.8.1
+// @version           0.8.2
 // @description       Capture a YouTube video's on-page subtitles and send them straight to your chosen AI (AI Studio, Gemini, ChatGPT, Claude, or Grok) for a free summary
 // @description:zh-TW  擷取 YouTube 影片頁面上的字幕，直接送到你選擇的 AI（AI Studio、Gemini、ChatGPT、Claude 或 Grok）做免費摘要
 // @description:zh-CN  抓取 YouTube 视频页面上的字幕，直接发送到你选择的 AI（AI Studio、Gemini、ChatGPT、Claude 或 Grok）做免费摘要
@@ -26,7 +26,7 @@
 // @license           MIT
 // @author            nathan60107
 // @copyright         nathan60107 (https://github.com/nathan60107)
-// @icon              https://raw.githubusercontent.com/nathan60107/YoutubeFreeAISummary/main/assets/icon.svg?b=8edbe6d
+// @icon              https://raw.githubusercontent.com/nathan60107/YoutubeFreeAISummary/main/assets/icon.svg?b=75a7c0f
 // @match             *://*.youtube.com/*
 // @match             *://aistudio.google.com/*
 // @match             *://gemini.google.com/*
@@ -47,7 +47,7 @@
 // @grant             GM.openInTab
 // @grant             unsafeWindow
 // @noframes
-// @resource          img-icon https://raw.githubusercontent.com/nathan60107/YoutubeFreeAISummary/main/assets/icon.svg?b=8edbe6d
+// @resource          img-icon https://raw.githubusercontent.com/nathan60107/YoutubeFreeAISummary/main/assets/icon.svg?b=75a7c0f
 // @require           https://cdn.jsdelivr.net/npm/@sv443-network/userutils@6.3.0/dist/index.global.js
 // ==/UserScript==
 
@@ -88,7 +88,7 @@
 
     const modeRaw = "production";
     const hostRaw = "greasyfork";
-    const buildNumberRaw = "8edbe6d";
+    const buildNumberRaw = "75a7c0f";
     /** The mode in which the script was built (production or development) */
     const mode = (modeRaw.match(/^#{{.+}}$/) ? "production" : modeRaw);
     /** Path to the GitHub repo in the format "User/Repo" */
@@ -173,6 +173,8 @@
         "feedback.debug.copyFailed": "Copy failed, please select manually",
         "feedback.debug.issue": "Go to the issue tracker ↗",
         "feedback.close": "Close",
+        // Notice modal — an expected, non-error condition (e.g. a video simply has no captions)
+        "notice.title": "No captions found",
         // Error messages shown in the feedback modal
         "error.noCaptions": "No subtitles/translations were found for this video, so it can't be summarized. Make sure the video has captions, then refresh and try again.",
         "error.noInput": "Couldn't find the input box on %1 — the page may not have finished loading, or its layout changed. Please refresh and try again.",
@@ -230,6 +232,7 @@
         "feedback.debug.copyFailed": "複製失敗，請手動選取",
         "feedback.debug.issue": "前往問題回報頁 ↗",
         "feedback.close": "關閉",
+        "notice.title": "找不到字幕",
         "error.noCaptions": "找不到這部影片的字幕／翻譯，無法摘要。請確認影片有字幕，重新整理頁面後再試一次。",
         "error.noInput": "在 %1 找不到輸入框，可能是頁面尚未載入完成或版面改版。請重新整理頁面後再試一次。",
         "provider.aistudio.note": "品質最佳：不限字數、可免費使用 Pro 模型；思考時間較長，但結果非常準確。適合長字幕。",
@@ -283,6 +286,7 @@
         "feedback.debug.copyFailed": "复制失败，请手动选取",
         "feedback.debug.issue": "前往问题反馈页 ↗",
         "feedback.close": "关闭",
+        "notice.title": "找不到字幕",
         "error.noCaptions": "找不到这部视频的字幕／翻译，无法摘要。请确认视频有字幕，刷新页面后再试一次。",
         "error.noInput": "在 %1 找不到输入框，可能是页面尚未加载完成或版面改版。请刷新页面后再试一次。",
         "provider.aistudio.note": "品质最佳：不限字数、可免费使用 Pro 模型；思考时间较长，但结果非常准确。适合长字幕。",
@@ -336,6 +340,7 @@
         "feedback.debug.copyFailed": "コピーに失敗しました。手動で選択してください",
         "feedback.debug.issue": "問題報告ページへ ↗",
         "feedback.close": "閉じる",
+        "notice.title": "字幕が見つかりません",
         "error.noCaptions": "この動画の字幕／翻訳が見つからないため、要約できません。動画に字幕があることを確認し、ページを再読み込みしてからもう一度お試しください。",
         "error.noInput": "%1 で入力欄が見つかりませんでした。ページの読み込みが完了していないか、レイアウトが変更された可能性があります。ページを再読み込みしてもう一度お試しください。",
         "provider.aistudio.note": "最高品質：文字数制限なし、Pro モデルを無料で利用可能。思考時間は長めですが、結果は非常に正確です。長い字幕に最適。",
@@ -389,6 +394,7 @@
         "feedback.debug.copyFailed": "복사 실패, 직접 선택해 주세요",
         "feedback.debug.issue": "이슈 트래커로 이동 ↗",
         "feedback.close": "닫기",
+        "notice.title": "자막을 찾을 수 없습니다",
         "error.noCaptions": "이 동영상의 자막/번역을 찾을 수 없어 요약할 수 없습니다. 동영상에 자막이 있는지 확인한 뒤 새로고침하고 다시 시도해 주세요.",
         "error.noInput": "%1에서 입력창을 찾지 못했습니다. 페이지 로딩이 끝나지 않았거나 레이아웃이 바뀌었을 수 있습니다. 새로고침한 후 다시 시도해 주세요.",
         "provider.aistudio.note": "최고 품질: 글자 수 제한 없이 Pro 모델을 무료로 사용할 수 있습니다. 사고 시간은 길지만 결과가 매우 정확합니다. 긴 자막에 적합합니다.",
@@ -442,6 +448,7 @@
         "feedback.debug.copyFailed": "Error al copiar, selecciónalo manualmente",
         "feedback.debug.issue": "Ir al gestor de incidencias ↗",
         "feedback.close": "Cerrar",
+        "notice.title": "No se encontraron subtítulos",
         "error.noCaptions": "No se encontraron subtítulos ni traducciones para este vídeo, así que no se puede resumir. Asegúrate de que el vídeo tenga subtítulos, actualiza la página e inténtalo de nuevo.",
         "error.noInput": "No se encontró el cuadro de texto en %1. Puede que la página no haya terminado de cargar o que su diseño haya cambiado. Actualiza la página e inténtalo de nuevo.",
         "provider.aistudio.note": "La mejor calidad: sin límite de longitud y acceso gratuito a modelos Pro; el tiempo de razonamiento es más largo, pero los resultados son muy precisos. Ideal para subtítulos largos.",
@@ -495,6 +502,7 @@
         "feedback.debug.copyFailed": "Échec de la copie, sélectionnez manuellement",
         "feedback.debug.issue": "Aller au suivi des problèmes ↗",
         "feedback.close": "Fermer",
+        "notice.title": "Aucun sous-titre trouvé",
         "error.noCaptions": "Aucun sous-titre ni traduction n’a été trouvé pour cette vidéo, elle ne peut donc pas être résumée. Assurez-vous que la vidéo a des sous-titres, puis actualisez et réessayez.",
         "error.noInput": "Impossible de trouver le champ de saisie sur %1 — la page n’a peut-être pas fini de charger, ou sa mise en page a changé. Veuillez actualiser et réessayer.",
         "provider.aistudio.note": "Meilleure qualité : aucune limite de longueur et accès gratuit aux modèles Pro ; temps de réflexion plus long, mais résultats très précis. Idéal pour les longs sous-titres.",
@@ -548,6 +556,7 @@
         "feedback.debug.copyFailed": "Kopieren fehlgeschlagen, bitte manuell auswählen",
         "feedback.debug.issue": "Zum Issue-Tracker ↗",
         "feedback.close": "Schließen",
+        "notice.title": "Keine Untertitel gefunden",
         "error.noCaptions": "Für dieses Video wurden keine Untertitel/Übersetzungen gefunden, daher kann es nicht zusammengefasst werden. Stelle sicher, dass das Video Untertitel hat, lade die Seite neu und versuche es erneut.",
         "error.noInput": "Das Eingabefeld auf %1 wurde nicht gefunden – die Seite ist möglicherweise noch nicht fertig geladen oder ihr Layout hat sich geändert. Bitte lade die Seite neu und versuche es erneut.",
         "provider.aistudio.note": "Beste Qualität: keine Längenbegrenzung und kostenloser Zugriff auf Pro-Modelle; längere Denkzeit, aber sehr genaue Ergebnisse. Ideal für lange Untertitel.",
@@ -601,6 +610,7 @@
         "feedback.debug.copyFailed": "Falha ao copiar, selecione manualmente",
         "feedback.debug.issue": "Ir ao rastreador de problemas ↗",
         "feedback.close": "Fechar",
+        "notice.title": "Nenhuma legenda encontrada",
         "error.noCaptions": "Não foram encontradas legendas/traduções para este vídeo, então não é possível resumi-lo. Verifique se o vídeo tem legendas, atualize a página e tente novamente.",
         "error.noInput": "Não foi possível encontrar o campo de entrada em %1 — a página pode não ter terminado de carregar, ou seu layout mudou. Atualize a página e tente novamente.",
         "provider.aistudio.note": "Melhor qualidade: sem limite de tamanho e acesso gratuito a modelos Pro; tempo de raciocínio maior, mas resultados muito precisos. Ótimo para legendas longas.",
@@ -654,6 +664,7 @@
         "feedback.debug.copyFailed": "Не удалось скопировать, выделите вручную",
         "feedback.debug.issue": "Перейти в трекер задач ↗",
         "feedback.close": "Закрыть",
+        "notice.title": "Субтитры не найдены",
         "error.noCaptions": "Для этого видео не найдены субтитры или перевод, поэтому его нельзя резюмировать. Убедитесь, что у видео есть субтитры, обновите страницу и попробуйте снова.",
         "error.noInput": "Не удалось найти поле ввода на %1 — возможно, страница не догрузилась или её вёрстка изменилась. Обновите страницу и попробуйте снова.",
         "provider.aistudio.note": "Лучшее качество: без ограничения длины и бесплатный доступ к моделям Pro; время обдумывания дольше, но результаты очень точные. Отлично подходит для длинных субтитров.",
@@ -1081,12 +1092,16 @@
 `;
 
     /**
-     * Shared failure feedback used by both the YouTube and AI provider sides.
+     * Shared user feedback used by both the YouTube and AI provider sides.
      *
-     * On a failure we show a modal telling the user to refresh and retry. Failure timestamps are
-     * persisted (via GM storage, shared across tabs) so that if the user hits two failures within
-     * five minutes — even across a page refresh or across the YouTube/AI provider tabs — the modal
-     * escalates to include a copyable debug report and a prompt to file a GitHub issue.
+     * On a failure ({@linkcode reportFailure}) we show a modal telling the user to refresh and retry.
+     * Failure timestamps are persisted (via GM storage, shared across tabs) so that if the user hits two
+     * failures within five minutes — even across a page refresh or across the YouTube/AI provider tabs —
+     * the modal escalates to include a copyable debug report and a prompt to file a GitHub issue.
+     *
+     * Expected, non-error conditions (e.g. a video simply has no captions) go through {@linkcode notify}
+     * instead, which shows a plain informational modal and is deliberately *not* counted toward that
+     * escalation — otherwise a couple of caption-less videos would wrongly prompt the user to file a bug.
      */
     /** GM storage key holding the recent failure timestamps (JSON array of epoch ms). */
     const failuresKey = "yfas-recent-failures";
@@ -1104,9 +1119,24 @@
      */
     function reportFailure(info) {
         return __awaiter(this, void 0, void 0, function* () {
+            var _a;
             const count = yield trackFailure();
-            showModal(info, count >= escalateThreshold);
+            showModal({
+                title: t("feedback.title"),
+                role: "alertdialog",
+                message: (_a = info.userMessage) !== null && _a !== void 0 ? _a : t("feedback.defaultMessage"),
+                context: info.context,
+                escalate: count >= escalateThreshold,
+            });
         });
+    }
+    /**
+     * Notifies the user of an *expected*, non-error condition — e.g. a video simply has no captions, so
+     * there is nothing to summarize. Unlike {@linkcode reportFailure} this never records a failure or
+     * escalates to the debug report, so a run of these can't trigger the "please file an issue" prompt.
+     */
+    function notify(message) {
+        showModal({ title: t("notice.title"), role: "dialog", message, escalate: false });
     }
     /** Clears the persisted failure counter. Exposed for the dev-only "reset" menu command. */
     function clearFailureCount() {
@@ -1165,15 +1195,16 @@
         ].join("\n");
     }
     /** Builds and shows the modal. Only one is shown at a time. */
-    function showModal(info, escalate) {
+    function showModal(opts) {
         var _a;
-        const report = escalate ? buildDebugReport(info.context) : "";
+        const { title, role, message, escalate } = opts;
+        const report = escalate ? buildDebugReport((_a = opts.context) !== null && _a !== void 0 ? _a : "") : "";
         const handle = openModal({
             id: overlayId$1,
-            label: t("feedback.title"),
-            role: "alertdialog",
+            label: title,
+            role,
             innerHtml: `
-      <h2 class="yfas-modal-title">${t("feedback.title")}</h2>
+      <h2 class="yfas-modal-title">${title}</h2>
       <p class="yfas-fb-msg"></p>
       ${escalate ? `
         <div class="yfas-fb-debug">
@@ -1199,7 +1230,7 @@
             addStyle(feedbackStyle, styleRef$1);
         const { overlay, close } = handle;
         // Assign text via textContent to avoid injecting untrusted strings as HTML.
-        overlay.querySelector(".yfas-fb-msg").textContent = (_a = info.userMessage) !== null && _a !== void 0 ? _a : t("feedback.defaultMessage");
+        overlay.querySelector(".yfas-fb-msg").textContent = message;
         overlay.querySelector("[data-action='close']").addEventListener("click", close);
         if (escalate) {
             const reportEl = overlay.querySelector(".yfas-fb-report");
@@ -2254,8 +2285,8 @@
      * Captures the current watch page's subtitles and stashes a payload for the AI provider tab, then
      * opens that tab. Assumes we're on a watch page with the player available.
      *
-     * @returns `true` if a summary was handed off; `false` if the video has no captions (a no-captions
-     *   failure is reported to the user in that case).
+     * @returns `true` if a summary was handed off; `false` if the video has no captions (the user is
+     *   notified of that expected condition, but it is not counted as a failure).
      * @throws if capture itself fails (the caller is expected to report the error).
      */
     function captureAndHandoff() {
@@ -2264,8 +2295,10 @@
             const preferredLangs = cfg.preferredLangs.split(",").map(s => s.trim()).filter(Boolean);
             const result = yield getCurrentSubtitles(preferredLangs.length > 0 ? { preferredLangs } : {});
             if (!result) {
+                // No captions is an expected outcome, not a failure: notify without counting it toward the
+                // repeated-failure escalation (which would wrongly prompt the user to file an issue).
                 warn("No captions are available for this video.");
-                void reportFailure({ context: "youtube:no-captions", userMessage: t("error.noCaptions") });
+                notify(t("error.noCaptions"));
                 return false;
             }
             log(`Captured ${result.segments.length} subtitle lines `
@@ -2710,8 +2743,10 @@ select.yfas-input {
                     return;
                 }
                 if (!result) {
+                    // No captions is an expected outcome, not a failure: just tell the user, without counting it
+                    // toward the repeated-failure escalation (which would wrongly prompt them to file an issue).
                     warn(`No captions are available for video ${videoId}.`);
-                    void reportFailure({ context: "youtube:thumbnail:no-captions", userMessage: t("error.noCaptions") });
+                    notify(t("error.noCaptions"));
                     return;
                 }
                 log(`Captured ${result.segments.length} subtitle lines off-page for ${videoId} `

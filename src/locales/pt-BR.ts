@@ -38,6 +38,8 @@ export const ptBR: Translations = {
   "feedback.debug.issue": "Ir ao rastreador de problemas ↗",
   "feedback.close": "Fechar",
 
+  "notice.title": "Nenhuma legenda encontrada",
+
   "error.noCaptions": "Não foram encontradas legendas/traduções para este vídeo, então não é possível resumi-lo. Verifique se o vídeo tem legendas, atualize a página e tente novamente.",
   "error.noInput": "Não foi possível encontrar o campo de entrada em %1 — a página pode não ter terminado de carregar, ou seu layout mudou. Atualize a página e tente novamente.",
 
